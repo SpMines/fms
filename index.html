@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SP FMS — Flow Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070710; --txt:#eef0f7; --muted:#9aa0b4;
+  --accent:#7c5cff; --accent2:#46b5ff;
+  --danger:#ff5d6c; --ok:#37d399; --warn:#ffb547;
+  --card:rgba(255,255,255,.045); --brd:rgba(255,255,255,.09); --inp:rgba(255,255,255,.04);
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Jost',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);min-height:100dvh}
+.blob{position:fixed;border-radius:50%;filter:blur(95px);opacity:.4;z-index:0;pointer-events:none}
+.b1{width:440px;height:440px;background:#6b46ff;top:-130px;left:-120px}
+.b2{width:400px;height:400px;background:#1f7bff;bottom:-150px;right:-110px}
+
+.faceLoader{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(7,7,16,.55);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.faceLoader.show{display:flex;animation:flFade .2s ease}
+@keyframes flFade{from{opacity:0}to{opacity:1}}
+.loading-text{font-size:32px;font-weight:800;letter-spacing:4px;text-transform:uppercase;background:linear-gradient(90deg,rgba(255,255,255,.28) 0%,#fff 50%,rgba(255,255,255,.28) 100%);background-size:200% auto;color:transparent;-webkit-background-clip:text;background-clip:text;animation:shimmer 1.8s linear infinite}
+@keyframes shimmer{to{background-position:200% center}}
+
+.modal{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;background:rgba(7,7,16,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:20px}
+.modal.show{display:flex;animation:flFade .2s ease}
+@keyframes flPop{from{transform:scale(.82);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-card{width:min(380px,100%);background:rgba(20,20,32,.94);border:1px solid var(--brd);border-radius:20px;padding:26px 24px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.6);animation:flPop .28s cubic-bezier(.2,.85,.3,1.25)}
+.modal-card.wide{width:min(1100px,calc(100% - 16px));text-align:left;max-height:92dvh;overflow-y:auto}
+#odModal .modal-card{width:80vw;max-width:1000px}
+.modal-card.od{width:min(760px,100%);text-align:left;max-height:92dvh;overflow-y:auto;padding:0}
+.modal-ic{font-size:34px;margin-bottom:10px}
+.modal-title{font-size:18px;font-weight:600;margin-bottom:8px}
+.modal-msg{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:22px;white-space:pre-line}
+.modal-acts{display:flex;gap:10px}
+.modal-acts .btn{margin-top:0}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#16161f;border:1px solid var(--brd);padding:13px 20px;border-radius:12px;font-size:13.5px;z-index:10001;opacity:0;transition:.3s;box-shadow:0 12px 30px rgba(0,0,0,.5);max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(55,211,153,.4)} .toast.err{border-color:rgba(255,93,108,.4)}
+
+.btn{width:100%;padding:13px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));transition:.2s;box-shadow:0 12px 30px rgba(124,92,255,.4)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(124,92,255,.5)}
+.btn:active{transform:translateY(0)} .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;border:1px solid var(--brd);box-shadow:none;color:var(--txt)}
+.btn.ghost:hover{background:var(--inp);box-shadow:none;transform:none}
+.btn.sm{width:auto;padding:8px 14px;font-size:13px;border-radius:9px;box-shadow:none}
+.btn.danger{background:linear-gradient(135deg,#ff5d6c,#ff3b6b);box-shadow:0 12px 30px rgba(255,93,108,.4)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:7px}
+.field input,.field select,.field textarea{width:100%;padding:12px 14px;border-radius:12px;background:var(--inp);border:1px solid var(--brd);color:var(--txt);font-size:16px;outline:none;transition:.2s;font-family:'Jost'}
+.field textarea{resize:vertical;min-height:70px}
+.field input::placeholder,.field textarea::placeholder{color:#5d6379}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18);background:rgba(255,255,255,.06)}
+.field select option{background:#13131c}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 90px 32px;gap:8px;align-items:center}
+.chk{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
+.chk input{width:auto;accent-color:var(--accent);transform:scale(1.2)}
+.linky{background:none;border:none;color:#8fd0ff;font-size:13px;cursor:pointer;font-family:'Jost'}
+.linky:hover{text-decoration:underline}
+
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:rgba(13,13,24,.55);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);border-bottom:1px solid var(--brd)}
+.logo{display:flex;align-items:center;gap:11px}
+.logo .dot{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 8px 22px rgba(124,92,255,.5)}
+.logo h1{font-size:17px;font-weight:600}
+.logo .tag{font-size:11.5px;color:var(--muted)}
+.userchip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);background:var(--inp);border:1px solid var(--brd);padding:7px 13px;border-radius:30px;white-space:nowrap;cursor:pointer}
+.userchip .r{color:#c9bdff;font-size:11px}
+.nav{display:flex;gap:8px;padding:12px 18px;overflow-x:auto;border-bottom:1px solid var(--brd);position:relative;z-index:5}
+.nav::-webkit-scrollbar{display:none}
+.nav button{flex-shrink:0;padding:9px 16px;border-radius:30px;border:1px solid var(--brd);background:var(--inp);color:var(--muted);font-size:13.5px;font-weight:500;cursor:pointer;transition:.2s;white-space:nowrap}
+.nav button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(124,92,255,.35)}
+
+/* v3.1: stretch to full laptop/desktop width instead of a narrow fixed column */
+.content{position:relative;z-index:1;width:100%;max-width:1720px;margin:0 auto;padding:20px 28px 90px}
+@media(min-width:1400px){ .content{padding:24px 48px 100px} }
+@media(max-width:900px){ .content{padding:16px 14px 90px} }
+
+.authwrap{position:relative;z-index:1;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+/* ===== CINEMATIC LAYER ===== */
+.auth-aurora{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.auth-aurora::before,.auth-aurora::after{content:'';position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(90px);opacity:.5;mix-blend-mode:screen}
+.auth-aurora::before{background:radial-gradient(circle,#7c5cff,transparent 60%);top:-25vmax;left:-15vmax;animation:aur1 14s ease-in-out infinite}
+.auth-aurora::after{background:radial-gradient(circle,#46b5ff,transparent 60%);bottom:-25vmax;right:-15vmax;animation:aur2 16s ease-in-out infinite}
+@keyframes aur1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(8vmax,6vmax) scale(1.15)}}
+@keyframes aur2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8vmax,-5vmax) scale(1.2)}}
+.authcard{position:relative;z-index:1;animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+
+/* v3.4 — split-card login (dark brand panel + white form panel), matches Ikxari-style reference */
+.auth-split{position:relative;z-index:1;width:min(920px,100%);display:grid;grid-template-columns:1fr 1fr;
+  border-radius:24px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.55);animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
+.auth-left{background:linear-gradient(160deg,#1b1030,#0d0d18);padding:44px 40px;display:flex;flex-direction:column;justify-content:center}
+.auth-left .brandrow{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.auth-left .dot{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 10px 30px rgba(124,92,255,.5);flex-shrink:0}
+.auth-left .brandname{font-size:18px;font-weight:700}
+.auth-left .brandtag{font-size:11.5px;color:var(--muted)}
+.auth-left h2{font-size:26px;font-weight:700;line-height:1.25;margin-bottom:14px;color:#fff}
+.auth-left p{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:26px}
+.auth-feat{display:flex;align-items:center;gap:12px;font-size:13.5px;color:#e6e7f0;margin-bottom:14px}
+.auth-feat .fi{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.auth-right{background:#f4f4f9;padding:44px 40px;color:#181822}
+.auth-right h3{font-size:22px;font-weight:700;margin-bottom:4px;color:#181822}
+.auth-right .sub{text-align:left;font-size:13px;color:#6b6f80;margin-bottom:22px}
+.auth-right .field label{color:#6b6f80}
+.auth-right .field input{background:#fff;border:1px solid #e3e3ec;color:#181822}
+.auth-right .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.15);background:#fff}
+.auth-right .field input::placeholder{color:#a3a6b5}
+.auth-right .linky{color:#6c4bff}
+.auth-right .credit{color:#a3a6b5}
+@media(max-width:820px){
+  .auth-split{grid-template-columns:1fr}
+  .auth-left{display:none}
+}
+.auth-brand{text-align:center;margin-bottom:20px}
+.dot.big{width:60px;height:60px;border-radius:18px;font-size:22px;margin:0 auto 14px;box-shadow:0 12px 40px rgba(124,92,255,.6);animation:floaty 4s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.auth-name{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.auth-tag{font-size:13px;color:var(--muted);margin-top:2px}
+.authcard .sub{text-align:center;font-size:13.5px;color:var(--muted);margin-bottom:22px;min-height:19px}
+
+/* order rows: subtle rise-in */
+.otable tr.orow{animation:rowIn .35s ease both}
+@keyframes rowIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* step rows in detail: staged reveal + status glow */
+.ostep{animation:stepIn .4s ease both}
+.ostep:nth-child(2){animation-delay:.04s}.ostep:nth-child(3){animation-delay:.08s}
+.ostep:nth-child(4){animation-delay:.12s}.ostep:nth-child(5){animation-delay:.16s}
+.ostep:nth-child(6){animation-delay:.2s}.ostep:nth-child(7){animation-delay:.24s}
+@keyframes stepIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.oseq.run{box-shadow:0 0 0 0 rgba(70,181,255,.5);animation:pulseRun 2s infinite}
+@keyframes pulseRun{0%{box-shadow:0 0 0 0 rgba(70,181,255,.45)}70%{box-shadow:0 0 0 10px rgba(70,181,255,0)}100%{box-shadow:0 0 0 0 rgba(70,181,255,0)}}
+.oseq.late{animation:pulseLate 1.4s infinite}
+@keyframes pulseLate{0%{box-shadow:0 0 0 0 rgba(255,93,108,.5)}70%{box-shadow:0 0 0 10px rgba(255,93,108,0)}100%{box-shadow:0 0 0 0 rgba(255,93,108,0)}}
+.countdown{display:inline-block;margin-top:5px;font-size:12px;font-weight:600;color:#8fd0ff;letter-spacing:.3px}
+.countdown.over{color:#ff97a2}
+
+/* modal entrance already exists; add order-detail scale */
+#odModal.show .modal-card{animation:odIn .45s cubic-bezier(.16,1,.3,1)}
+@keyframes odIn{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:none}}
+
+/* stat cards hover lift */
+.stat{transition:transform .2s,border-color .2s,box-shadow .2s}
+.stat:hover{transform:translateY(-3px)}
+
+/* nav pill active glow */
+.nav button.active{box-shadow:0 8px 24px rgba(124,92,255,.45)}
+
+
+.authcard .logo{justify-content:center;margin-bottom:8px}
+.authcard .sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:24px}
+.authfoot{text-align:center;margin-top:14px}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:16px 18px;cursor:pointer;transition:.2s}
+.stat:hover{border-color:rgba(124,92,255,.4)}
+.stat.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(124,92,255,.2)}
+.stat .n{font-size:26px;font-weight:700}
+.stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+.stat .bar{height:3px;border-radius:3px;margin-top:10px}
+.box{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:20px;margin-bottom:16px}
+.box h4{font-size:15px;font-weight:600;margin-bottom:14px}
+
+.badge{display:inline-block;padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.bg-Pending,.bg-Locked{background:rgba(154,160,180,.18);color:#c2c7d6;border:1px solid rgba(154,160,180,.35)}
+.bg-Running{background:rgba(70,181,255,.16);color:#8fd0ff;border:1px solid rgba(70,181,255,.4)}
+.bg-Completed{background:rgba(55,211,153,.16);color:#7fe9c0;border:1px solid rgba(55,211,153,.4)}
+.bg-Delayed{background:rgba(255,93,108,.16);color:#ff97a2;border:1px solid rgba(255,93,108,.4)}
+.bg-Owner,.bg-Admin{background:rgba(124,92,255,.18);color:#c9bdff;border:1px solid rgba(124,92,255,.4)}
+.bg-Role{background:rgba(154,160,180,.14);color:#c2c7d6;border:1px solid rgba(154,160,180,.3)}
+
+/* FILTER ROW (Orders — advance report tracking) */
+.filterrow{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center;background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:12px 14px}
+.filterrow select,.filterrow input[type=date]{padding:9px 12px;border-radius:10px;background:var(--inp);border:1px solid var(--brd);color:var(--txt);font-size:13.5px;outline:none;font-family:'Jost'}
+.filterrow .lbl{font-size:11.5px;color:var(--muted);margin-right:-4px}
+
+/* ORDERS TABLE */
+.toolrow{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center}
+.toolrow input[type=search]{flex:1;min-width:200px;padding:11px 14px;border-radius:12px;background:var(--inp);border:1px solid var(--brd);color:var(--txt);font-size:16px;outline:none;font-family:'Jost'}
+.toolrow input[type=search]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+.otable{width:100%;border-collapse:collapse;font-size:13.5px}
+.otable th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--brd);white-space:nowrap}
+.otable td{padding:12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+.otable tr.orow{cursor:pointer;transition:.15s}
+.otable tr.orow:hover td{background:rgba(124,92,255,.06)}
+.oid{font-weight:700;color:#c9bdff;white-space:nowrap}
+.otitle{font-weight:500}
+.osub{font-size:11.5px;color:var(--muted)}
+.oprog{min-width:110px}
+.pbar{height:5px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:4px}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.pager{display:flex;gap:8px;align-items:center;justify-content:center;padding:14px 0;font-size:13px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+
+/* ORDER DETAIL — v3.1 minimal, stretched, live countdown */
+.od-head{padding:22px 26px 16px;border-bottom:1px solid var(--brd);position:sticky;top:0;background:rgba(20,20,32,.97);backdrop-filter:blur(10px);z-index:2}
+.od-head .odTitle{font-size:19px;font-weight:700}
+.od-head .odSub{font-size:12.5px;color:var(--muted);margin-top:4px}
+.od-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.od-chip{font-size:11.5px;padding:5px 12px;border-radius:20px;background:var(--inp);border:1px solid var(--brd);color:var(--muted)}
+.od-chip b{color:var(--txt);font-weight:500}
+.od-drive{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:5px 12px;border-radius:20px;background:rgba(55,211,153,.1);border:1px solid rgba(55,211,153,.3);color:#7fe9c0;text-decoration:none}
+.od-items{padding:14px 26px;border-bottom:1px solid var(--brd)}
+.od-items h5{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+.itable{width:100%;font-size:13px;border-collapse:collapse}
+.itable td{padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.06)}
+.itable td:last-child{text-align:right;color:var(--muted)}
+.od-body{padding:8px 26px 26px}
+
+.ostep{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.ostep:last-child{border:none}
+.ostep.locked{opacity:.5}
+.oseq{width:30px;height:30px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;border:1px solid var(--brd);background:var(--inp)}
+.oseq.done{background:rgba(55,211,153,.16);color:#7fe9c0;border-color:rgba(55,211,153,.45)}
+.oseq.run{background:rgba(70,181,255,.16);color:#8fd0ff;border-color:rgba(70,181,255,.45)}
+.oseq.late{background:rgba(255,93,108,.16);color:#ff97a2;border-color:rgba(255,93,108,.45)}
+.ostep .m{flex:1;min-width:0}
+.ostep .nm{font-size:14.5px;font-weight:600}
+.ostep .dd{font-size:12px;color:var(--muted);margin-top:2px}
+.ostep .doc{font-size:12px;margin-top:4px}
+.ostep .doc a{color:#8fd0ff;text-decoration:none}
+.ostep .acts{display:flex;flex-direction:row;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.ostep .acts .btn{width:auto;text-align:center;white-space:nowrap}
+.ostep .acts .badge{text-align:center}
+#odModal .modal-acts{justify-content:flex-end}
+#odModal .modal-acts .btn{width:auto;min-width:150px}
+.countdown{font-size:11.5px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.countdown.run{color:#8fd0ff}
+.countdown.late{color:#ff97a2}
+.od-foot{display:flex;gap:10px;padding:16px 26px;border-top:1px solid var(--brd);position:sticky;bottom:0;background:rgba(20,20,32,.97)}
+.od-foot .btn{margin-top:0}
+
+/* TEMPLATE BUILDER */
+.flow{display:flex;flex-direction:column;max-width:100%;margin:0 auto}
+.stepcard{position:relative;background:rgba(13,13,24,.55);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);border:1px solid var(--brd);border-radius:18px;padding:15px 15px 13px 19px;box-shadow:0 18px 50px rgba(0,0,0,.45);transition:.2s}
+.stepcard[draggable=true]{cursor:default}
+.stepcard:hover{transform:translateY(-2px);border-color:rgba(124,92,255,.35)}
+.stepcard.dragging{opacity:.45;transform:scale(.98)}
+.stepcard.dropTarget{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.25)}
+.stepcard.off{opacity:.45;filter:grayscale(.6)}
+.stepcard::before{content:'';position:absolute;left:0;top:13px;bottom:13px;width:4px;border-radius:4px;background:var(--stepcolor,var(--accent))}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.sc-num{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.sc-name{font-size:16px;font-weight:600;margin:2px 0 4px}
+.sc-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:6px 0 10px}
+.sc-meta b{color:var(--txt);font-weight:500}
+.sc-tag{font-size:11.5px;padding:3px 10px;border-radius:20px;display:inline-block;margin:0 6px 8px 0}
+.t-dep{color:#8fd0ff;background:rgba(70,181,255,.08);border:1px solid rgba(70,181,255,.2)}
+.t-role{color:#c9bdff;background:rgba(124,92,255,.1);border:1px solid rgba(124,92,255,.28)}
+.t-doc{color:#ffc875;background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.3)}
+.sc-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.icobtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--brd);background:var(--inp);color:var(--muted);font-size:14px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
+.icobtn:hover{background:rgba(124,92,255,.15);color:#fff;border-color:rgba(124,92,255,.4)}
+.icobtn.red:hover{background:rgba(255,93,108,.15);border-color:rgba(255,93,108,.4)}
+.drag{margin-left:auto;cursor:grab;font-size:17px;color:#5d6379;padding:0 4px;user-select:none}
+.connector{display:flex;flex-direction:column;align-items:center;padding:2px 0}
+.connline{width:2px;height:20px;background:repeating-linear-gradient(to bottom,var(--accent) 0 5px,transparent 5px 10px);background-size:100% 20px;animation:dashmove 1.2s linear infinite;opacity:.7}
+@keyframes dashmove{to{background-position:0 20px}}
+.connarrow{color:var(--accent);font-size:13px;line-height:.6;opacity:.8}
+.insertpill{margin:3px 0;padding:4px 13px;border-radius:20px;border:1px dashed rgba(124,92,255,.45);background:rgba(124,92,255,.06);color:#c9bdff;font-size:11.5px;font-weight:600;cursor:pointer;transition:.2s;opacity:.55}
+.insertpill:hover{opacity:1;background:rgba(124,92,255,.16)}
+
+.hrow{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;align-items:center}
+.hrow .ic{width:34px;height:34px;flex-shrink:0;border-radius:10px;background:var(--inp);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:15px}
+.hrow .d{color:var(--muted);font-size:12px;margin-top:2px}
+.hrow .acts{margin-left:auto;display:flex;gap:6px}
+.permgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}
+
+.empty{padding:50px 20px;text-align:center;color:var(--muted);font-size:14px}
+.empty .big{font-size:42px;margin-bottom:12px}
+.credit{text-align:center;font-size:11.5px;color:#5d6379;padding:26px 0 8px}
+.credit b{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+@media(max-width:760px){
+  .row2,.permgrid{grid-template-columns:1fr}
+  .logo .tag{display:none}
+  .otable .hidem{display:none}
+  .od-head,.od-items,.od-body,.od-foot{padding-left:16px;padding-right:16px}
+}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="faceLoader" id="faceLoader"><div class="loading-text">SP FMS</div></div>
+
+<!-- ============ AUTH ============ -->
+<div class="authwrap" id="authScreen" style="display:none">
+  <div class="auth-aurora"></div>
+  <div class="auth-split">
+    <div class="auth-left">
+      <div class="brandrow"><div class="dot">SP</div><div><div class="brandname">SP FMS</div><div class="brandtag">Flow Management System</div></div></div>
+      <h2>Flow Management,<br>minus the chaos.</h2>
+      <p>Every order gets a live clock, a locked step-by-step workflow, and an auto-organised Drive folder — secured with role-based access.</p>
+      <div class="auth-feat"><span class="fi">⏱</span> Live order tracking &amp; TAT clocks</div>
+      <div class="auth-feat"><span class="fi">🔒</span> Strictly sequential, locked workflow steps</div>
+      <div class="auth-feat"><span class="fi">📁</span> Auto Google Drive folder per order</div>
+      <div class="auth-feat"><span class="fi">📧</span> Email alerts when a step is due</div>
+    </div>
+    <div class="auth-right">
+
+    <div id="v_login">
+      <h3>Welcome back</h3>
+      <div class="sub" id="authSub">Sign in to your SP FMS account.</div>
+      <div class="field"><label>Email</label><input id="lg_email" type="email" placeholder="you@company.com"></div>
+      <div class="field"><label>Password</label><input id="lg_pass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn" onclick="doLogin()">Sign In</button>
+      <div class="authfoot">
+        <button class="linky" onclick="authView('forgot')">Forgot password?</button> ·
+        <button class="linky" onclick="authView('signup')">New here? Create one</button>
+      </div>
+    </div>
+
+    <div id="v_signup" style="display:none">
+      <h3>Create account</h3>
+      <div class="field"><label>Full Name</label><input id="su_name" placeholder="Your name"></div>
+      <div class="field"><label>Email</label><input id="su_email" type="email" placeholder="you@company.com"></div>
+      <div class="field"><label>Password</label><input id="su_pass" type="password" placeholder="Make it strong (min 4)"></div>
+      <button class="btn" onclick="doSignup()">Create account</button>
+      <div class="authfoot"><button class="linky" onclick="authView('login')">Already have one? Sign in</button></div>
+    </div>
+
+    <div id="v_otp" style="display:none">
+      <h3>Verify email</h3>
+      <div class="field"><label>Code sent to <b id="otpEmailLbl"></b></label>
+        <input id="ot_code" inputmode="numeric" placeholder="6-digit code"></div>
+      <button class="btn" onclick="doVerifyOtp()">Verify</button>
+      <div class="authfoot">
+        <button class="linky" onclick="doResendOtp()">Resend code</button> ·
+        <button class="linky" onclick="authView('login')">Back</button>
+      </div>
+    </div>
+
+    <div id="v_forgot" style="display:none">
+      <h3>Reset password</h3>
+      <div class="field"><label>Email</label><input id="fg_email" type="email" placeholder="you@company.com"></div>
+      <button class="btn" onclick="doForgot()">Send reset code</button>
+      <div class="authfoot"><button class="linky" onclick="authView('login')">Back</button></div>
+    </div>
+
+    <div id="v_reset" style="display:none">
+      <h3>Set new password</h3>
+      <div class="field"><label>OTP sent to <b id="rsEmailLbl"></b></label>
+        <input id="rs_code" inputmode="numeric" placeholder="6-digit OTP"></div>
+      <div class="field"><label>New Password</label><input id="rs_pass" type="password" placeholder="New password"></div>
+      <button class="btn" onclick="doReset()">Reset Password</button>
+      <div class="authfoot"><button class="linky" onclick="authView('login')">Back to sign in</button></div>
+    </div>
+
+    <div class="credit">Built by <b>Somnath Karmakar</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" style="display:none">
+<div class="topbar">
+  <div class="logo"><div class="dot">SP</div><div><h1>SP FMS</h1><div class="tag">Flow Management System</div></div></div>
+  <div class="userchip" onclick="logoutConfirm()" title="Sign out">👤 <span id="userName"></span> <span class="r" id="userRole"></span> ⏻</div>
+</div>
+
+<div class="nav" id="nav">
+  <button class="active" data-page="orders" onclick="go('orders')">📦 Orders</button>
+  <button data-page="builder" onclick="go('builder')" id="builderNav" style="display:none">🧩 Templates</button>
+  <button data-page="team" onclick="go('team')" id="teamNav" style="display:none">👥 Team</button>
+</div>
+
+<div class="content">
+
+  <!-- ORDERS -->
+  <div id="page-orders">
+    <div class="cards" id="orderStats"></div>
+    <div class="filterrow">
+      <span class="lbl">🧩 Template</span>
+      <select id="f_wf" onchange="ORD_PAGE=1;loadOrders()"><option value="">All templates</option></select>
+      <span class="lbl">From</span>
+      <input type="date" id="f_from" onchange="ORD_PAGE=1;loadOrders()">
+      <span class="lbl">To</span>
+      <input type="date" id="f_to" onchange="ORD_PAGE=1;loadOrders()">
+      <button class="btn sm ghost" onclick="clearFilters()">✕ Clear filters</button>
+    </div>
+    <div class="toolrow">
+      <input type="search" id="oq" placeholder="Search orders, people, items…" onkeydown="if(event.key==='Enter')searchOrders()">
+      <button class="btn sm ghost" onclick="searchOrders()">🔍 Search</button>
+      <button class="btn sm" onclick="openNewOrder()">＋ New Order</button>
+    </div>
+    <div class="box">
+      <div class="tablewrap">
+        <table class="otable">
+          <thead><tr>
+            <th>Order</th><th>Receiver</th><th class="hidem">Party</th><th class="hidem">Current Step</th>
+            <th>Progress</th><th>Status</th><th class="hidem">Created</th>
+          </tr></thead>
+          <tbody id="orderRows"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager"></div>
+    </div>
+  </div>
+
+  <!-- TEMPLATE BUILDER -->
+  <div id="page-builder" style="display:none">
+    <div class="toolrow">
+      <select id="tplSelect" onchange="switchTemplate(this.value)" style="flex:1;min-width:200px;padding:12px 14px;border-radius:12px;background:var(--inp);border:1px solid var(--brd);color:var(--txt);font-size:15px;outline:none;font-family:'Jost'"></select>
+      <button class="btn sm ghost" onclick="openTplModal()">＋ New Template</button>
+      <button class="btn sm ghost" onclick="deleteTemplate()">🗑</button>
+      <button class="btn sm" onclick="openStepModal()">＋ Add Step</button>
+    </div>
+    <div class="flow" id="flow"></div>
+  </div>
+
+  <!-- TEAM -->
+  <div id="page-team" style="display:none">
+    <div class="box" id="pendingBox" style="display:none">
+      <h4>🔔 New Employee Requests</h4>
+      <div id="pendingList"></div>
+    </div>
+    <div class="box">
+      <h4>👥 Users</h4>
+      <div id="userList"></div>
+      <div style="margin-top:18px;border-top:1px solid var(--brd);padding-top:16px">
+        <div class="row2">
+          <div class="field"><label>Name</label><input id="au_name" placeholder="e.g. Sumit"></div>
+          <div class="field"><label>Email</label><input id="au_email" type="email" placeholder="sumit@company.com"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Password</label><input id="au_pass" placeholder="e.g. Sumit@2026"></div>
+          <div class="field"><label>Role</label><select id="au_role"></select></div>
+        </div>
+        <button class="btn" onclick="addUserDirect()">＋ Add User (details email ho jayengi)</button>
+      </div>
+    </div>
+    <div class="box">
+      <h4>🛡️ Roles & Permissions</h4>
+      <div id="roleList"></div>
+      <div style="margin-top:18px;border-top:1px solid var(--brd);padding-top:16px">
+        <div class="field"><label>New Role Name</label><input id="nr_name" placeholder="e.g. Supervisor"></div>
+        <div class="permgrid">
+          <label class="chk"><input type="checkbox" id="nr_build"> Build templates</label>
+          <label class="chk"><input type="checkbox" id="nr_exall"> Execute all steps</label>
+          <label class="chk"><input type="checkbox" id="nr_exown" checked> Execute assigned steps</label>
+          <label class="chk"><input type="checkbox" id="nr_team"> Manage team</label>
+        </div>
+        <button class="btn" onclick="addRole()">＋ Add Role</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="credit">Built by <b>Somnath Karmakar</b></div>
+</div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card">
+    <div class="modal-ic" id="modalIc">⚠️</div>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-msg" id="modalMsg"></div>
+    <div class="modal-acts" id="modalActs"></div>
+  </div>
+</div>
+
+<!-- NEW ORDER MODAL -->
+<div class="modal" id="orderModal" onclick="if(event.target===this)closeOrderModal()">
+  <div class="modal-card wide">
+    <div class="modal-title" style="margin-bottom:18px">＋ New Order</div>
+    <div class="field"><label>Template *</label><select id="no_tpl"></select></div>
+    <div class="row2">
+      <div class="field"><label>Receiver Name *</label><input id="no_receiver" placeholder="Who receives / raises this order"></div>
+      <div class="field"><label>Required Person *</label><input id="no_reqperson" placeholder="Person this is required for"></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="no_notes" placeholder="Optional"></textarea></div>
+
+    <div class="field">
+      <label>Items *</label>
+      <div id="no_items"></div>
+      <button class="btn sm ghost" style="margin-top:6px" onclick="addItemRow()">＋ Add Item</button>
+    </div>
+
+    <div class="modal-acts">
+      <button class="btn ghost" onclick="closeOrderModal()">Cancel</button>
+      <button class="btn" onclick="createOrder()">Create — Clock Starts Now ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal" id="odModal" onclick="if(event.target===this)closeOd()">
+  <div class="modal-card od">
+    <div class="od-head">
+      <div class="odTitle" id="odTitle"></div>
+      <div class="odSub" id="odSub"></div>
+      <div class="od-meta" id="odMeta"></div>
+    </div>
+    <div class="od-items" id="odItemsWrap" style="display:none">
+      <h5>📦 Items</h5>
+      <table class="itable" id="odItems"></table>
+    </div>
+    <div class="od-body">
+      <div id="odSteps"></div>
+    </div>
+    <div class="od-foot">
+      <button class="btn ghost" onclick="closeOd()">Close</button>
+      <button class="btn danger" id="odDelBtn" onclick="deleteOrder()" style="display:none">🗑 Delete Order</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="fileInput" style="display:none" onchange="fileChosen(this)">
+
+<!-- STEP MODAL (template) -->
+<div class="modal" id="stepModal" onclick="if(event.target===this)closeStepModal()">
+  <div class="modal-card wide">
+    <div class="modal-title" id="stepModalTitle" style="margin-bottom:18px">Add Step</div>
+    <div class="field"><label>Step Name *</label><input id="f_name" placeholder="e.g. Quotation Upload"></div>
+    <div class="field"><label>Description</label><textarea id="f_desc" placeholder="What happens in this step…"></textarea></div>
+    <div class="row2">
+      <div class="field"><label>Handled By (Role)</label><select id="f_role"><option value="">— Any role —</option></select></div>
+      <div class="field"><label>Department</label><input id="f_dept" placeholder="e.g. Purchase"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Time Allowed</label><input id="f_est" type="number" min="0" step="0.5" value="1"></div>
+      <div class="field"><label>Time Unit</label>
+        <select id="f_unit"><option>Minutes</option><option>Hours</option><option selected>Days</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Starts After</label><select id="f_dep" onchange="depHint()"></select></div>
+      <div class="field"><label id="f_depv_lbl">Value</label><input id="f_depv" placeholder="—"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Priority</label>
+        <select id="f_pri"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+      <div class="field"><label>Card Color</label><input id="f_color" type="color" value="#7c5cff" style="height:47px;padding:6px"></div>
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label class="chk"><input type="checkbox" id="f_needsdoc"> 📄 Show a document slot on this step (optional — people can attach a file, not mandatory)</label>
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label class="chk"><input type="checkbox" id="f_isdecision" onchange="decisionHint()"> 🔀 This is a Decision step (Doer answers Yes / No)</label>
+    </div>
+    <div id="f_decision_box" style="display:none;background:var(--inp);border:1px solid var(--brd);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div class="field" style="margin-bottom:0">
+        <label>If answer is <b>No</b>, then:</label>
+        <select id="f_no_action" onchange="decisionHint()">
+          <option value="stop">🛑 Stop the order here (remaining steps skipped)</option>
+          <option value="goto">↪ Jump to another step</option>
+          <option value="complete">✅ Mark the whole order Completed here</option>
+        </select>
+      </div>
+      <div class="field" id="f_no_target_wrap" style="margin:10px 0 0;display:none">
+        <label>Jump to which step?</label>
+        <select id="f_no_target"></select>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn ghost" onclick="closeStepModal()">Cancel</button>
+      <button class="btn" onclick="saveStep()">Save Step</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL -->
+<div class="modal" id="tplModal" onclick="if(event.target===this)closeTplModal()">
+  <div class="modal-card wide">
+    <div class="modal-title" style="margin-bottom:18px">New Template</div>
+    <div class="field"><label>Template Name *</label><input id="tp_name" placeholder="e.g. Procurement Flow"></div>
+    <div class="field"><label>Description</label><textarea id="tp_desc" placeholder="Purpose…"></textarea></div>
+    <div class="modal-acts">
+      <button class="btn ghost" onclick="closeTplModal()">Cancel</button>
+      <button class="btn" onclick="createTemplate()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= CONFIG ================= */
+const API = "https://script.google.com/macros/s/AKfycbyCg8ykWIFazW32YeG8TaQbd19-_j2V1U72weQPo0GzUCxZctgWwY_WJ8iN2ZAegxLL/exec";
+
+/* ================= CORE ================= */
+let _busy=0;
+function showLoader(){_busy++;document.getElementById('faceLoader').classList.add('show');}
+function hideLoader(){_busy=Math.max(0,_busy-1);if(_busy===0)document.getElementById('faceLoader').classList.remove('show');}
+function rawApi(p){
+  showLoader();
+  return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)})
+    .then(r=>r.json()).then(d=>{hideLoader();return d;})
+    .catch(e=>{hideLoader();toast('Network error — check internet / GAS access','err');throw e;});
+}
+/** Silent variant — used by the background poller so it never flashes the full-screen loader. */
+function apiSilent(p){
+  if(SESSION){ p.user = SESSION.email; p.token = SESSION.token; }
+  return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)})
+    .then(r=>r.json()).then(d=> d.ok ? d.data : Promise.reject(new Error(d.error||'Server error')));
+}
+function api(p){
+  if(SESSION){ p.user = SESSION.email; p.token = SESSION.token; }
+  return rawApi(p).then(d=>{
+    if(!d.ok){
+      if(String(d.error).startsWith('AUTH:')){ logout(true); throw new Error(d.error.slice(5).trim()); }
+      if(d.error==='NO_OWNER'){ logout(true); throw new Error('Setup required — sign up as first user'); }
+      throw new Error(d.error||'Server error');
+    }
+    return d.data;
+  }).catch(e=>{ if(e.message) toast(e.message,'err'); throw e; });
+}
+function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');setTimeout(()=>t.className='toast '+(type||''),3600);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function modalConfirm(o){
+  document.getElementById('modalIc').textContent=o.icon||'⚠️';
+  document.getElementById('modalTitle').textContent=o.title||'Are you sure?';
+  document.getElementById('modalMsg').textContent=o.message||'';
+  const acts=document.getElementById('modalActs');acts.innerHTML='';
+  const cancel=document.createElement('button');cancel.className='btn ghost';cancel.textContent=o.cancelText||'Cancel';cancel.onclick=closeModal;
+  const ok=document.createElement('button');ok.className='btn'+(o.danger?' danger':'');ok.textContent=o.confirmText||'Confirm';
+  ok.onclick=function(){closeModal();if(o.onConfirm)o.onConfirm();};
+  if(o.onConfirm){acts.appendChild(cancel);acts.appendChild(ok);}else{acts.appendChild(ok);}
+  document.getElementById('modal').classList.add('show');
+}
+function modalAlert(m,t,i){modalConfirm({title:t||'Notice',message:m,icon:i||'ℹ️',confirmText:'OK'});}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+function fmtDT(iso){
+  if(!iso) return '—';
+  let d = new Date(String(iso).replace(' ','T'));
+  if(isNaN(d)) d = new Date(iso);
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function hrs(m){ m=Number(m)||0; return m>=1440?(m/1440).toFixed(1)+' d':m>=60?(m/60).toFixed(1)+' hr':m+' min'; }
+function parseTS(iso){ let d=new Date(String(iso).replace(' ','T')); if(isNaN(d)) d=new Date(iso); return d; }
+/** mm:ss / hh:mm:ss style countdown-or-overdue string, live-ticking. */
+function countdownStr(deadlineIso){
+  const diff = parseTS(deadlineIso).getTime() - Date.now();
+  const late = diff < 0;
+  let s = Math.abs(Math.round(diff/1000));
+  const d = Math.floor(s/86400); s%=86400;
+  const h = Math.floor(s/3600); s%=3600;
+  const m = Math.floor(s/60); s%=60;
+  let out = d>0 ? d+'d '+h+'h' : h>0 ? h+'h '+m+'m' : m+'m '+s+'s';
+  return late ? ('⚠ '+out+' overdue') : ('⏳ '+out+' left');
+}
+
+/* ================= STATE ================= */
+let SESSION=null, PERMS={}, ROLE='', ROLES=[];
+let TEMPLATES=[], CURTPL=localStorage.getItem('fms_tpl')||'', TSTEPS=[];
+let ORD_PAGE=1, ORD_STATUS='All', ORD_LASTQ='', CUR_ORDER=null, CUR_STEPS=[], UPLOAD_OS=null;
+let EDIT_ID=null, INSERT_AFTER=null, ITEM_ROW_N=0;
+let ODTICK=null, ODPOLL=null;
+try{ SESSION = JSON.parse(localStorage.getItem('fms_session_v3')||'null'); }catch(e){}
+function can(k){ return PERMS[k]===true; }
+
+/* ================= AUTH FLOW ================= */
+window.addEventListener('DOMContentLoaded', ()=>{
+  if(SESSION && SESSION.token){ onAuthed(SESSION); loadOrders(); }
+  else showAuth('login');
+});
+function showAuth(view){
+  document.getElementById('app').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+  authView(view||'login');
+}
+function authView(v){
+  ['login','signup','otp','forgot','reset'].forEach(x=>
+    document.getElementById('v_'+x).style.display = x===v?'block':'none');
+  document.getElementById('authSub').textContent = {
+    login:'Welcome back. Pick up where you left off.',
+    signup:'Create your account — an admin approves you, then you\u2019re in.',
+    otp:'Check your inbox for the code.',
+    forgot:'We\u2019ll email you a reset code.',
+    reset:'Enter the code and set a new password.'
+  }[v];
+}
+let OTP_EMAIL='';
+function doSignup(){
+  const n=document.getElementById('su_name').value.trim();
+  const e=document.getElementById('su_email').value.trim();
+  const p=document.getElementById('su_pass').value;
+  if(!n||!e||!p) return toast('All fields required','err');
+  rawApi({action:'signup', name:n, email:e, password:p}).then(d=>{
+    if(!d.ok) return toast(d.error,'err');
+    if(d.data.session){ saveSession(d.data.session); toast('Super Admin account created 🎉','ok'); loadOrders(); return; }
+    OTP_EMAIL = d.data.email;
+    document.getElementById('otpEmailLbl').textContent = OTP_EMAIL;
+    authView('otp');
+    toast('OTP sent to your email 📧','ok');
+  });
+}
+function doVerifyOtp(){
+  const c=document.getElementById('ot_code').value.trim();
+  if(!c) return toast('Enter OTP','err');
+  rawApi({action:'verifyOtp', email:OTP_EMAIL, otp:c}).then(d=>{
+    if(!d.ok) return toast(d.error,'err');
+    modalAlert('Email verified ✅\nYour account is now waiting for Admin approval. You will get an email once approved.','Request Sent','🎉');
+    authView('login');
+  });
+}
+function doResendOtp(){
+  rawApi({action:'resendOtp', email:OTP_EMAIL}).then(d=>{
+    if(!d.ok) return toast(d.error,'err');
+    toast('New OTP sent 📧','ok');
+  });
+}
+function doLogin(){
+  const e=document.getElementById('lg_email').value.trim();
+  const p=document.getElementById('lg_pass').value;
+  if(!e||!p) return toast('Email and password required','err');
+  rawApi({action:'login', user:e, password:p}).then(d=>{
+    if(!d.ok) return toast(d.error,'err');
+    if(d.data.needOwner){ authView('signup'); toast('First run — sign up to become Super Admin','ok'); return; }
+    if(d.data.unverified){ OTP_EMAIL=d.data.email;
+      document.getElementById('otpEmailLbl').textContent=OTP_EMAIL;
+      rawApi({action:'resendOtp', email:OTP_EMAIL});
+      authView('otp'); toast('Verify your email first — OTP sent','err'); return; }
+    saveSession(d.data.session);
+    loadOrders();
+  });
+}
+function doForgot(){
+  const e=document.getElementById('fg_email').value.trim();
+  if(!e) return toast('Enter email','err');
+  rawApi({action:'forgotPassword', email:e}).then(d=>{
+    if(!d.ok) return toast(d.error,'err');
+    OTP_EMAIL=e;
+    document.getElementById('rsEmailLbl').textContent=e;
+    authView('reset'); toast('Reset OTP sent 📧','ok');
+  });
+}
+function doReset(){
+  const c=document.getElementById('rs_code').value.trim();
+  const p=document.getElementById('rs_pass').value;
+  if(!c||!p) return toast('OTP and new password required','err');
+  rawApi({action:'resetPassword', email:OTP_EMAIL, otp:c, password:p}).then(d=>{
+    if(!d.ok) return toast(d.error,'err');
+    toast('Password reset ✔ — sign in now','ok');
+    authView('login');
+  });
+}
+function saveSession(s){
+  SESSION={name:s.name,email:s.email,token:s.token,role:s.role,perms:s.perms,roles:s.roles};
+  localStorage.setItem('fms_session_v3', JSON.stringify(SESSION));
+  onAuthed(s);
+}
+function onAuthed(s){
+  ROLE=s.role||ROLE; PERMS=s.perms||PERMS; ROLES=s.roles||ROLES;
+  document.getElementById('userName').textContent=SESSION.name;
+  document.getElementById('userRole').textContent= ROLE?('· '+ROLE):'';
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('builderNav').style.display = can('can_build')?'':'none';
+  document.getElementById('teamNav').style.display = can('can_manage_team')?'':'none';
+  // v3.3 fix: the old check here ("if(!s.perms) rawApi({action:'login'})") never actually
+  // refreshed anything — a bare {action:'login'} with no email/password just fails auth
+  // silently. That's why, after a page refresh, a Project Manager (or any non-owner role)
+  // could see a step assigned to them as "Running" but had NO Accept/Mark Done button —
+  // ROLE/PERMS were stuck empty until a full manual re-login. Now we always do a real
+  // silent refresh against the current token, so role/permission changes (or a plain
+  // browser refresh) never leave the app in a permission-less state.
+  apiSilent({action:'whoami'}).then(d=>{
+    ROLE=d.role||ROLE; PERMS=d.perms||PERMS; ROLES=d.roles||ROLES;
+    SESSION.role=ROLE; SESSION.perms=PERMS; SESSION.roles=ROLES;
+    localStorage.setItem('fms_session_v3', JSON.stringify(SESSION));
+    document.getElementById('userRole').textContent= ROLE?('· '+ROLE):'';
+    document.getElementById('builderNav').style.display = can('can_build')?'':'none';
+    document.getElementById('teamNav').style.display = can('can_manage_team')?'':'none';
+  }).catch(()=>{});
+}
+function logoutConfirm(){
+  modalConfirm({icon:'⏻', title:'Sign out?', message:'', confirmText:'Sign Out', onConfirm:()=>logout(false)});
+}
+function logout(silent){
+  SESSION=null; PERMS={}; ROLE='';
+  localStorage.removeItem('fms_session_v3');
+  showAuth('login');
+  if(!silent) toast('Signed out','ok');
+}
+
+/* ================= NAV ================= */
+function go(p){
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.page===p));
+  ['orders','builder','team'].forEach(x=>document.getElementById('page-'+x).style.display = x===p?'block':'none');
+  if(p==='orders') loadOrders();
+  if(p==='builder') loadTemplates();
+  if(p==='team') loadTeam();
+}
+
+/* ================= ORDERS LIST ================= */
+function searchOrders(){ ORD_PAGE=1; ORD_LASTQ=document.getElementById('oq').value.trim(); loadOrders(); }
+function setOrdStatus(s){ ORD_STATUS=s; ORD_PAGE=1; loadOrders(); }
+function clearFilters(){
+  document.getElementById('f_wf').value='';
+  document.getElementById('f_from').value='';
+  document.getElementById('f_to').value='';
+  document.getElementById('oq').value='';
+  ORD_STATUS='All'; ORD_PAGE=1; loadOrders();
+}
+function fillFilterTemplates(){
+  api({action:'listTemplates'}).then(list=>{
+    const sel=document.getElementById('f_wf');
+    const cur=sel.value;
+    sel.innerHTML='<option value="">All templates</option>'+list.map(t=>`<option value="${t.wf_id}">${esc(t.name)}</option>`).join('');
+    sel.value=cur;
+  }).catch(()=>{});
+}
+function loadOrders(){
+  api({action:'listOrders', q:document.getElementById('oq').value.trim(), status:ORD_STATUS, page:ORD_PAGE,
+    wf_id:document.getElementById('f_wf').value, from:document.getElementById('f_from').value, to:document.getElementById('f_to').value})
+  .then(d=>{
+    const c=d.counts;
+    const stat=(label,n,key,color)=>`<div class="stat ${ORD_STATUS===key?'on':''}" onclick="setOrdStatus('${key}')">
+      <div class="n">${n}</div><div class="l">${label}</div><div class="bar" style="background:${color}"></div></div>`;
+    document.getElementById('orderStats').innerHTML =
+      stat('All Orders',c.all,'All','var(--accent)') +
+      stat('Running',c.running,'Running','var(--accent2)') +
+      stat('Delayed',c.delayed,'Delayed','var(--danger)') +
+      stat('Completed',c.completed,'Completed','var(--ok)');
+
+    document.getElementById('orderRows').innerHTML = d.orders.length ? d.orders.map(o=>{
+      const pct = o.total? Math.round(o.done/o.total*100):0;
+      return `<tr class="orow" onclick="openOrder('${o.order_id}')">
+        <td class="oid">${esc(o.order_id)}</td>
+        <td><div class="otitle">${esc(o.receiver)||esc(o.title)}</div><div class="osub">by ${esc(o.created_by)}</div></td>
+        <td class="hidem">${esc(o.party)||'—'}</td>
+        <td class="hidem">${esc(o.current)}</td>
+        <td class="oprog"><div class="osub">${o.done}/${o.total} steps</div><div class="pbar"><i style="width:${pct}%"></i></div></td>
+        <td><span class="badge bg-${esc(o.status)}">${esc(o.status)}</span></td>
+        <td class="hidem osub">${fmtDT(o.created_at)}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="7"><div class="empty"><div class="big">📦</div>Nothing here yet. Spin up your first order.</div></td></tr>`;
+
+    document.getElementById('pager').innerHTML = d.pages>1 ?
+      `<button class="btn sm ghost" ${d.page<=1?'disabled':''} onclick="ORD_PAGE--;loadOrders()">← Prev</button>
+       <span>Page ${d.page} / ${d.pages} · ${d.total} orders</span>
+       <button class="btn sm ghost" ${d.page>=d.pages?'disabled':''} onclick="ORD_PAGE++;loadOrders()">Next →</button>`
+      : `<span>${d.total} order${d.total===1?'':'s'}</span>`;
+  });
+  if(!document.getElementById('f_wf').options.length || document.getElementById('f_wf').options.length===1)
+    fillFilterTemplates();
+}
+
+/* ================= NEW ORDER ================= */
+function addItemRow(name,qty){
+  ITEM_ROW_N++;
+  const id='it_'+ITEM_ROW_N;
+  const wrap=document.getElementById('no_items');
+  const row=document.createElement('div');
+  row.className='row3'; row.style.marginBottom='8px'; row.id=id;
+  row.innerHTML=`<input placeholder="Item name" value="${esc(name||'')}" class="it_name">
+    <input type="number" min="0" step="1" placeholder="Qty" value="${qty||''}" class="it_qty">
+    <button class="icobtn red" onclick="document.getElementById('${id}').remove()">✕</button>`;
+  wrap.appendChild(row);
+}
+function collectItems(){
+  return Array.from(document.querySelectorAll('#no_items .row3')).map(r=>({
+    name: r.querySelector('.it_name').value.trim(),
+    qty: Number(r.querySelector('.it_qty').value)||0
+  })).filter(it=>it.name);
+}
+function openNewOrder(){
+  api({action:'listTemplates'}).then(list=>{
+    TEMPLATES=list;
+    if(!list.length){
+      if(can('can_build')) return modalAlert('Pehle Templates tab mein ek template banao (steps ke saath), phir order create hoga.','No template yet','🧩');
+      return modalAlert('No workflow template exists yet — ask your admin to create one.','No template','🧩');
+    }
+    document.getElementById('no_tpl').innerHTML = list.map(t=>
+      `<option value="${t.wf_id}">${esc(t.name)} (${t.steps} steps)</option>`).join('');
+    document.getElementById('no_notes').value='';
+    document.getElementById('no_receiver').value=''; document.getElementById('no_reqperson').value='';
+    document.getElementById('no_items').innerHTML=''; ITEM_ROW_N=0;
+    addItemRow();
+    document.getElementById('orderModal').classList.add('show');
+  });
+}
+function closeOrderModal(){ document.getElementById('orderModal').classList.remove('show'); }
+function createOrder(){
+  const receiver=document.getElementById('no_receiver').value.trim();
+  const reqperson=document.getElementById('no_reqperson').value.trim();
+  const items=collectItems();
+  if(!receiver) return toast('Receiver name required','err');
+  if(!reqperson) return toast('Required person required','err');
+  if(!items.length) return toast('Add at least one item with quantity','err');
+  api({action:'createOrder', wf_id:document.getElementById('no_tpl').value,
+    notes:document.getElementById('no_notes').value.trim(),
+    receiver:receiver, required_person:reqperson, items:items})
+  .then(d=>{ closeOrderModal(); loadOrders(); toast(d.order_id+' is live — Step 1 done, clock\'s ticking on Step 2 ⏱','ok'); });
+}
+
+/* ================= ORDER DETAIL (v3.1 — minimal, live countdown, auto-refresh) ================= */
+function stopOdTimers(){
+  if(ODTICK){ clearInterval(ODTICK); ODTICK=null; }
+  if(ODPOLL){ clearInterval(ODPOLL); ODPOLL=null; }
+}
+function openOrder(id){
+  stopOdTimers();
+  fetchAndRenderOrder(id, true);
+  document.getElementById('odModal').classList.add('show');
+  ODTICK = setInterval(()=> tickCountdowns(), 1000);              // live per-second countdown, no network
+  ODPOLL = setInterval(()=> fetchAndRenderOrder(id, false), 15000); // silent background refresh, no reload/flash
+}
+function fetchAndRenderOrder(id, showLoaderFlag){
+  const call = showLoaderFlag ? api({action:'getOrder', order_id:id}) : apiSilent({action:'getOrder', order_id:id});
+  return call.then(d=>{
+    CUR_ORDER=d.order; CUR_STEPS=d.steps;
+    renderOrderDetail();
+  }).catch(()=>{});
+}
+function tickCountdowns(){
+  document.querySelectorAll('#odSteps [data-deadline]').forEach(el=>{
+    const iso = el.getAttribute('data-deadline');
+    const late = parseTS(iso).getTime() < Date.now();
+    el.textContent = countdownStr(iso);
+    el.className = 'countdown ' + (late?'late':'run');
+  });
+}
+function renderOrderDetail(){
+  const o=CUR_ORDER, steps=CUR_STEPS;
+  document.getElementById('odTitle').textContent = o.order_id+' — '+o.title;
+  document.getElementById('odSub').textContent = 'by '+o.created_by+' · '+fmtDT(o.created_at)+(o.notes?' · '+o.notes:'');
+  document.getElementById('odDelBtn').style.display = can('can_build')?'':'none';
+
+  const chips=[];
+  if(o.party) chips.push(`<span class="od-chip">🏢 <b>${esc(o.party)}</b></span>`);
+  if(o.receiver) chips.push(`<span class="od-chip">🎯 Receiver: <b>${esc(o.receiver)}</b></span>`);
+  if(o.required_person) chips.push(`<span class="od-chip">🙋 Required for: <b>${esc(o.required_person)}</b></span>`);
+  if(o.outcome) chips.push(`<span class="od-chip" style="color:#ffc875;border-color:rgba(255,181,71,.35)">${o.outcome==='Stopped'?'🛑 Stopped early':'✅ Completed early'} (decision)</span>`);
+  if(o.drive_folder_url) chips.push(`<a class="od-drive" href="${esc(o.drive_folder_url)}" target="_blank">📁 Open Drive Folder ↗</a>`);
+  document.getElementById('odMeta').innerHTML = chips.join('');
+
+  const itemsWrap=document.getElementById('odItemsWrap');
+  const items = o.items || [];
+  if(items.length){
+    itemsWrap.style.display='block';
+    const hl = (ORD_LASTQ||'').toLowerCase();
+    document.getElementById('odItems').innerHTML = items.map(it=>{
+      const match = hl && String(it.name).toLowerCase().includes(hl);
+      return `<tr style="${match?'background:rgba(124,92,255,.14)':''}"><td>${esc(it.name)}${match?' <span class="sc-tag t-role" style="margin-left:6px">match</span>':''}</td><td>×${esc(it.qty)}</td></tr>`;
+    }).join('');
+  } else itemsWrap.style.display='none';
+
+  document.getElementById('odSteps').innerHTML = steps.map(s=>{
+    const locked = s.live==='Locked' || s.live==='Pending';
+    const skipped = s.live==='Skipped';
+    const cls = s.live==='Completed'?'done':s.live==='Delayed'?'late':s.live==='Running'?'run':'';
+    const mine = can('can_execute_all') || (can('can_execute_assigned') && s.role===ROLE);
+    const actionable = mine && !locked && !skipped && (s.live==='Running'||s.live==='Delayed');
+    const wantsDoc = String(s.needs_doc)==='true';
+    const isDecision = String(s.is_decision)==='true';
+    let act='';
+    if(actionable && isDecision){
+      act = `<button class="btn sm" style="background:linear-gradient(135deg,#37d399,#2bb383)" onclick="decideStep('${s.os_id}','Yes')">✅ Yes</button>`
+          + `<button class="btn sm danger" onclick="decideStep('${s.os_id}','No')">❌ No</button>`;
+    } else if(actionable){
+      // doc is optional now — attach anytime, complete with Mark Done
+      act = `<button class="btn sm ghost" onclick="pickFile('${s.os_id}')">📎 ${s.doc_url?'Replace':'Attach'}</button>`
+          + `<button class="btn sm" onclick="markDone('${s.os_id}')">✓ Done</button>`;
+    } else if(skipped){
+      act = `<span class="osub">— skipped —</span>`;
+    } else if(locked){
+      act = `<span class="osub">🔒 Locked</span>`;
+    } else if((s.live==='Running'||s.live==='Delayed') && !mine){
+      act = `<span class="osub">${esc(s.role)||'—'}</span>`;
+    }
+    const showCountdown = (s.live==='Running'||s.live==='Delayed');
+    return `<div class="ostep ${locked||skipped?'locked':''}">
+        <div class="oseq ${cls}">${s.live==='Completed'?'✓':skipped?'—':locked?'🔒':s.seq}</div>
+        <div class="m">
+          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''} ${isDecision?'<span class="sc-tag t-role" style="margin:0 0 0 6px;background:rgba(255,181,71,.12);border-color:rgba(255,181,71,.35);color:#ffc875">🔀 Decision</span>':''}</div>
+          <div class="dd">
+            ${s.role?'🛡️ '+esc(s.role)+' · ':''}⏱ ${hrs(s.tat_mins)}
+            ${s.decision_answer?` · answered <b>${esc(s.decision_answer)}</b>`:''}
+            ${s.done_ts?` · ✅ ${fmtDT(s.done_ts)} · ${esc(s.done_by)}`:''}
+          </div>
+          ${showCountdown?`<div class="countdown" data-deadline="${esc(s.deadline_ts)}">${countdownStr(s.deadline_ts)}</div>`:''}
+          ${s.doc_url?`<div class="doc">📎 <a href="${esc(s.doc_url)}" target="_blank">${esc(s.doc_name)||'Document'}</a></div>`:''}
+        </div>
+        <div class="acts">
+          <span class="badge bg-${skipped?'Locked':locked?'Locked':s.live}">${skipped?'Skipped':locked?'Locked':s.live}</span>
+          ${act}
+        </div>
+      </div>`;
+  }).join('');
+}
+function closeOd(){
+  stopOdTimers();
+  document.getElementById('odModal').classList.remove('show');
+  loadOrders();
+}
+function markDone(osId){
+  api({action:'completeOrderStep', os_id:osId})
+    .then(()=>{ toast('Step completed ✔ — next step clock started','ok'); fetchAndRenderOrder(CUR_ORDER.order_id, true); });
+}
+function decideStep(osId, answer){
+  api({action:'decideStep', os_id:osId, answer:answer})
+    .then(()=>{ toast(answer==='Yes'?'Marked Yes ✔ — moving on':'Marked No — order routed per the No-branch','ok'); fetchAndRenderOrder(CUR_ORDER.order_id, true); });
+}
+function pickFile(osId){ UPLOAD_OS=osId; document.getElementById('fileInput').value=''; document.getElementById('fileInput').click(); }
+function fileChosen(inp){
+  const f = inp.files && inp.files[0];
+  if(!f || !UPLOAD_OS) return;
+  if(f.size > 8*1024*1024) return toast('File too big (max 8 MB)','err');
+  const r = new FileReader();
+  r.onload = ()=>{
+    const b64 = String(r.result).split(',')[1];
+    api({action:'uploadDoc', os_id:UPLOAD_OS, filename:f.name, mimeType:f.type, data:b64})
+      .then(d=>{ toast(d.completed?'Document uploaded → step completed ✔':'Document uploaded ✔','ok');
+        fetchAndRenderOrder(CUR_ORDER.order_id, true); });
+  };
+  r.readAsDataURL(f);
+}
+function deleteOrder(){
+  modalConfirm({icon:'🗑', title:'Delete order?', danger:true,
+    message:CUR_ORDER.order_id+' and all its step data will be removed permanently.',
+    confirmText:'Delete Order',
+    onConfirm:()=> api({action:'deleteOrder', order_id:CUR_ORDER.order_id})
+      .then(()=>{ stopOdTimers(); document.getElementById('odModal').classList.remove('show'); loadOrders(); toast('Order deleted','ok'); })
+  });
+}
+
+/* ================= TEMPLATES (builder) ================= */
+function loadTemplates(){
+  api({action:'listTemplates'}).then(list=>{
+    TEMPLATES=list;
+    if(!CURTPL || !list.find(t=>t.wf_id===CURTPL)) CURTPL = list.length?list[0].wf_id:'';
+    document.getElementById('tplSelect').innerHTML = list.length
+      ? list.map(t=>`<option value="${t.wf_id}" ${t.wf_id===CURTPL?'selected':''}>${esc(t.name)} (${t.steps} steps)</option>`).join('')
+      : '<option value="">— No templates yet —</option>';
+    if(CURTPL) loadTemplate(); else document.getElementById('flow').innerHTML =
+      '<div class="empty"><div class="big">🧩</div>No templates yet. Build one and reuse it forever.</div>';
+  });
+}
+function switchTemplate(id){ CURTPL=id; localStorage.setItem('fms_tpl',id); if(id) loadTemplate(); }
+function loadTemplate(){
+  return api({action:'getTemplate', wf_id:CURTPL}).then(d=>{ TSTEPS=d.steps; renderFlow(); });
+}
+function openTplModal(){ document.getElementById('tp_name').value=''; document.getElementById('tp_desc').value=''; document.getElementById('tplModal').classList.add('show'); }
+function closeTplModal(){ document.getElementById('tplModal').classList.remove('show'); }
+function createTemplate(){
+  const n=document.getElementById('tp_name').value.trim();
+  if(!n) return toast('Template name required','err');
+  api({action:'createTemplate', name:n, description:document.getElementById('tp_desc').value.trim()})
+    .then(d=>{ CURTPL=d.wf_id; localStorage.setItem('fms_tpl',CURTPL); closeTplModal(); loadTemplates(); toast('Template created ✔','ok'); });
+}
+function deleteTemplate(){
+  if(!CURTPL) return;
+  const t=TEMPLATES.find(x=>x.wf_id===CURTPL);
+  modalConfirm({icon:'🗑', title:'Delete template?', danger:true,
+    message:'"'+(t?t.name:'')+'" will be deleted. Not allowed if orders already use it.',
+    confirmText:'Delete',
+    onConfirm:()=> api({action:'deleteTemplate', wf_id:CURTPL})
+      .then(()=>{ CURTPL=''; localStorage.removeItem('fms_tpl'); loadTemplates(); toast('Template deleted','ok'); })
+  });
+}
+function depLabel(s){
+  if(s.dep_type==='After Step'){
+    const en = TSTEPS.filter(x=>String(x.enabled)!=='false');
+    const i = en.findIndex(x=>x.step_id===s.dep_value);
+    const ref = TSTEPS.find(x=>x.step_id===s.dep_value);
+    return ref ? 'After Step '+(i+1)+' — '+ref.name : 'After Previous';
+  }
+  return s.dep_type + (s.dep_value?': '+s.dep_value:'');
+}
+function renderFlow(){
+  const box=document.getElementById('flow');
+  if(!TSTEPS.length){ box.innerHTML='<div class="empty"><div class="big">➕</div>Empty canvas. Drop your first step in.</div>'; return; }
+  let html='', num=0;
+  TSTEPS.forEach((s,i)=>{
+    const off = String(s.enabled)==='false';
+    if(!off) num++;
+    html += `
+    <div class="stepcard ${off?'off':''}" draggable="true" data-id="${s.step_id}" style="--stepcolor:${esc(s.color)||'var(--accent)'}"
+      ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropCard(event)" ondragend="dragEnd(event)">
+      <div class="sc-top">
+        <div><div class="sc-num">${off?'— OFF —':'STEP '+num}</div><div class="sc-name">${esc(s.name)}</div></div>
+        <span class="drag" title="Drag to reorder">≡</span>
+      </div>
+      ${s.description?`<div class="sc-meta" style="margin-top:0">${esc(s.description)}</div>`:''}
+      <div class="sc-meta"><span>⏱ <b>${s.est_time} ${s.time_unit}</b></span>
+        <span>🏢 <b>${esc(s.department)||'—'}</b></span>
+        <span class="pri-${esc(s.priority)}">◆ ${esc(s.priority)}</span></div>
+      <div>
+        <span class="sc-tag t-dep">🔗 ${esc(depLabel(s))}</span>
+        ${s.role?`<span class="sc-tag t-role">🛡️ ${esc(s.role)}</span>`:''}
+        ${String(s.needs_doc)==='true'?'<span class="sc-tag t-doc">📄 Doc slot</span>':''}
+        ${String(s.is_decision)==='true'?'<span class="sc-tag t-role" style="background:rgba(255,181,71,.12);border-color:rgba(255,181,71,.35);color:#ffc875">🔀 Decision (Yes/No)</span>':''}
+      </div>
+      <div class="sc-acts">
+        <button class="icobtn" title="Edit" onclick="openStepModal('${s.step_id}')">✏️</button>
+        <button class="icobtn" title="Duplicate" onclick="dupStep('${s.step_id}')">⧉</button>
+        <button class="icobtn" title="${off?'Enable':'Disable'}" onclick="toggleStep('${s.step_id}')">${off?'▶':'⏸'}</button>
+        <button class="icobtn red" title="Delete" onclick="delStep('${s.step_id}','${esc(s.name)}')">🗑</button>
+      </div>
+    </div>`;
+    if(i<TSTEPS.length-1){
+      html += `<div class="connector"><div class="connline"></div><div class="connarrow">▼</div>
+        <button class="insertpill" onclick="openStepModal(null,'${s.step_id}')">＋ Insert step here</button></div>`;
+    }
+  });
+  box.innerHTML=html;
+}
+
+let DRAG_ID=null;
+function dragStart(e){ DRAG_ID=e.currentTarget.dataset.id; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function dragOver(e){ e.preventDefault(); e.currentTarget.classList.add('dropTarget'); }
+function dragLeave(e){ e.currentTarget.classList.remove('dropTarget'); }
+function dragEnd(e){ e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.dropTarget').forEach(x=>x.classList.remove('dropTarget')); }
+function dropCard(e){
+  e.preventDefault();
+  const target=e.currentTarget.dataset.id;
+  e.currentTarget.classList.remove('dropTarget');
+  if(!DRAG_ID||DRAG_ID===target) return;
+  const ids=TSTEPS.map(s=>s.step_id);
+  const from=ids.indexOf(DRAG_ID), to=ids.indexOf(target);
+  ids.splice(from,1); ids.splice(to,0,DRAG_ID);
+  DRAG_ID=null;
+  api({action:'reorderSteps', wf_id:CURTPL, order:ids})
+    .then(()=>loadTemplate()).then(()=>toast('Steps reordered ✔','ok'));
+}
+
+function depHint(){
+  const v=document.getElementById('f_dep').value;
+  const l=document.getElementById('f_depv_lbl');
+  const i=document.getElementById('f_depv');
+  if(v.startsWith('step::')){ l.textContent='Waits for selected step'; i.value=''; i.disabled=true; return; }
+  i.disabled=false;
+  if(v==='Lag After Previous'){ l.textContent='Lag (e.g. 2 Days / 3 Hours)'; i.placeholder='2 Days'; }
+  else { l.textContent='Value (optional)'; i.placeholder='—'; }
+}
+function buildDepOptions(selfId){
+  const sel=document.getElementById('f_dep');
+  let html=['After Previous','Lag After Previous'].map(o=>`<option value="${o}">${o}</option>`).join('');
+  let n=0;
+  TSTEPS.forEach(s=>{
+    if(String(s.enabled)==='false') return;
+    n++;
+    if(s.step_id===selfId) return;
+    html+=`<option value="step::${s.step_id}">After Step ${n} — ${esc(s.name)}</option>`;
+  });
+  sel.innerHTML=html;
+}
+function buildRoleOptions(sel, selected, includeEmpty){
+  let html = includeEmpty?'<option value="">— Any role —</option>':'';
+  ROLES.forEach(r=>{ html+=`<option value="${esc(r.role_name)}" ${r.role_name===selected?'selected':''}>${esc(r.role_name)}</option>`; });
+  sel.innerHTML=html;
+}
+function buildNoTargetOptions(selfId, selected){
+  const sel=document.getElementById('f_no_target');
+  let html='', n=0;
+  TSTEPS.forEach(s=>{
+    if(String(s.enabled)==='false') return;
+    n++;
+    if(s.step_id===selfId) return;
+    html+=`<option value="${s.step_id}" ${s.step_id===selected?'selected':''}>Step ${n} — ${esc(s.name)}</option>`;
+  });
+  sel.innerHTML = html || '<option value="">— no other steps —</option>';
+}
+function decisionHint(){
+  const on = document.getElementById('f_isdecision').checked;
+  document.getElementById('f_decision_box').style.display = on?'block':'none';
+  const wantsGoto = document.getElementById('f_no_action').value==='goto';
+  document.getElementById('f_no_target_wrap').style.display = wantsGoto?'block':'none';
+}
+function openStepModal(stepId, insertAfter){
+  EDIT_ID=stepId||null; INSERT_AFTER=insertAfter||null;
+  const g=id=>document.getElementById(id);
+  buildDepOptions(stepId);
+  buildRoleOptions(g('f_role'),'',true);
+  const depSel=g('f_dep');
+  if(stepId){
+    const s=TSTEPS.find(x=>x.step_id===stepId); if(!s) return;
+    g('stepModalTitle').textContent='Edit Step — '+s.name;
+    g('f_name').value=s.name; g('f_desc').value=s.description; g('f_role').value=s.role||'';
+    g('f_dept').value=s.department; g('f_est').value=s.est_time; g('f_unit').value=s.time_unit;
+    g('f_pri').value=s.priority||'Medium';
+    g('f_color').value=(s.color&&String(s.color).startsWith('#'))?s.color:'#7c5cff';
+    g('f_needsdoc').checked=String(s.needs_doc)==='true';
+    g('f_isdecision').checked=String(s.is_decision)==='true';
+    g('f_no_action').value = s.decision_no_action || 'stop';
+    buildNoTargetOptions(stepId, s.decision_no_target||'');
+    if(s.dep_type==='After Step') depSel.value='step::'+s.dep_value;
+    else depSel.value=s.dep_type||'After Previous';
+    g('f_depv').value = s.dep_type==='After Step'?'':(s.dep_value||'');
+    const en=TSTEPS.filter(x=>String(x.enabled)!=='false');
+    if(en.length&&en[0].step_id===stepId){ depSel.value='After Previous'; depSel.disabled=true; }
+    else depSel.disabled=false;
+  } else {
+    g('stepModalTitle').textContent=insertAfter?'Insert Step':'Add Step';
+    g('f_name').value=''; g('f_desc').value=''; g('f_role').value=''; g('f_dept').value='';
+    g('f_est').value=1; g('f_unit').value='Days'; g('f_pri').value='Medium';
+    g('f_color').value='#7c5cff'; g('f_needsdoc').checked=false;
+    g('f_isdecision').checked=false; g('f_no_action').value='stop';
+    buildNoTargetOptions(null, '');
+    depSel.value='After Previous'; g('f_depv').value='';
+    const firstEver=TSTEPS.filter(s=>String(s.enabled)!=='false').length===0;
+    depSel.disabled=firstEver;
+  }
+  decisionHint();
+  depHint();
+  document.getElementById('stepModal').classList.add('show');
+}
+function closeStepModal(){ document.getElementById('stepModal').classList.remove('show'); }
+function saveStep(){
+  const g=id=>document.getElementById(id);
+  if(!g('f_name').value.trim()) return toast('Step name required','err');
+  if(!CURTPL) return toast('Create a template first','err');
+  const dv=g('f_dep').value;
+  const dep = dv.startsWith('step::')
+    ? {dep_type:'After Step', dep_value:dv.slice(6)}
+    : {dep_type:dv, dep_value:g('f_depv').value.trim()};
+  const s={ name:g('f_name').value.trim(), description:g('f_desc').value.trim(),
+    role:g('f_role').value, department:g('f_dept').value.trim(),
+    est_time:Number(g('f_est').value)||1, time_unit:g('f_unit').value,
+    dep_type:dep.dep_type, dep_value:dep.dep_value,
+    priority:g('f_pri').value, color:g('f_color').value,
+    needs_doc:g('f_needsdoc').checked,
+    is_decision:g('f_isdecision').checked,
+    decision_no_action:g('f_no_action').value,
+    decision_no_target:g('f_isdecision').checked && g('f_no_action').value==='goto' ? g('f_no_target').value : '' };
+  const req = EDIT_ID
+    ? api({action:'updateStep', step_id:EDIT_ID, step:s})
+    : api({action:'createStep', wf_id:CURTPL, after_step_id:INSERT_AFTER, step:s});
+  req.then(()=>{ closeStepModal(); return loadTemplate(); })
+     .then(()=>toast(EDIT_ID?'Step updated ✔':'Step added ✔','ok'));
+}
+function delStep(id,name){
+  modalConfirm({icon:'🗑', title:'Delete step?', danger:true,
+    message:'"'+name+'" will be removed from the template. Existing orders are not affected.',
+    confirmText:'Delete',
+    onConfirm:()=> api({action:'deleteStep', step_id:id}).then(()=>loadTemplate()).then(()=>toast('Step deleted ✔','ok'))
+  });
+}
+function dupStep(id){ api({action:'duplicateStep', step_id:id}).then(()=>loadTemplate()).then(()=>toast('Duplicated ✔ (locked behind original)','ok')); }
+function toggleStep(id){ api({action:'toggleStep', step_id:id}).then(d=>loadTemplate().then(()=>toast(d.enabled?'Enabled ✔':'Disabled','ok'))); }
+
+/* ================= TEAM ================= */
+function loadTeam(){
+  api({action:'listTeam'}).then(d=>{
+    ROLES=d.roles;
+    buildRoleOptions(document.getElementById('au_role'),'Doer',false);
+    const pb=document.getElementById('pendingBox');
+    if(d.pending.length){
+      pb.style.display='block';
+      document.getElementById('pendingList').innerHTML = d.pending.map(u=>{
+        const opts = d.roles.map(r=>`<option value="${esc(r.role_name)}" ${r.role_name==='Doer'?'selected':''}>${esc(r.role_name)}</option>`).join('');
+        return `<div class="hrow">
+          <div class="ic">🆕</div>
+          <div><div><b>${esc(u.name)}</b></div><div class="d">${esc(u.email)} · ${fmtDT(u.created_at)}</div></div>
+          <div class="acts">
+            <select id="ap_${esc(u.email).replace(/[^a-z0-9]/gi,'_')}" style="padding:8px;border-radius:9px;background:var(--inp);border:1px solid var(--brd);color:var(--txt);font-family:'Jost'">${opts}</select>
+            <button class="btn sm" onclick="approveUser('${esc(u.email)}')">✔ Approve</button>
+            <button class="icobtn red" title="Reject" onclick="rejectUser('${esc(u.email)}')">✕</button>
+          </div>
+        </div>`;
+      }).join('');
+    } else pb.style.display='none';
+
+    document.getElementById('userList').innerHTML = d.users.map(u=>`
+      <div class="hrow">
+        <div class="ic">👤</div>
+        <div><div><b>${esc(u.name)}</b> <span class="badge ${['Super Admin','Admin'].includes(u.role)?'bg-Owner':'bg-Role'}" style="margin-left:6px">${esc(u.role)}</span></div>
+          <div class="d">${esc(u.email)} · ${u.status==='Disabled'?'⛔ Disabled':'✅ Active'}</div></div>
+        <div class="acts">
+          <select onchange="setUserRole('${esc(u.email)}',this.value)" style="padding:8px;border-radius:9px;background:var(--inp);border:1px solid var(--brd);color:var(--txt);font-family:'Jost'">
+            ${d.roles.map(r=>`<option ${r.role_name===u.role?'selected':''}>${esc(r.role_name)}</option>`).join('')}
+          </select>
+          <button class="icobtn" title="${u.status==='Disabled'?'Enable':'Disable'}" onclick="toggleUser('${esc(u.email)}','${u.status}')">${u.status==='Disabled'?'▶':'⏸'}</button>
+          <button class="icobtn red" title="Delete" onclick="delUser('${esc(u.email)}')">🗑</button>
+        </div>
+      </div>`).join('') || '<div class="empty" style="padding:14px">No users</div>';
+
+    document.getElementById('roleList').innerHTML = d.roles.map(r=>{
+      const locked=r.role_name==='Super Admin';
+      const core=['Super Admin','Admin','Project Manager','Doer'].includes(r.role_name);
+      const cb=(key,label,val)=>`<label class="chk"><input type="checkbox" ${val?'checked':''} ${locked?'disabled':''} onchange="setRolePerm('${esc(r.role_name)}','${key}',this.checked)"> ${label}</label>`;
+      return `<div class="hrow" style="align-items:flex-start">
+        <div class="ic">🛡️</div>
+        <div style="flex:1"><div><b>${esc(r.role_name)}</b>${locked?' <span style="font-size:11px;color:#5d6379">(locked)</span>':''}</div>
+          <div class="permgrid" style="margin:8px 0 0">
+            ${cb('can_build','Build templates',r.can_build)}
+            ${cb('can_execute_all','Execute all',r.can_execute_all)}
+            ${cb('can_execute_assigned','Execute assigned',r.can_execute_assigned)}
+            ${cb('can_manage_team','Manage team',r.can_manage_team)}
+          </div></div>
+        ${!core?`<button class="icobtn red" title="Delete role" onclick="delRole('${esc(r.role_name)}')">🗑</button>`:''}
+      </div>`;
+    }).join('');
+  });
+}
+function addUserDirect(){
+  const g=id=>document.getElementById(id);
+  const n=g('au_name').value.trim(), e=g('au_email').value.trim(),
+        p=g('au_pass').value, r=g('au_role').value;
+  if(!n||!e||!p) return toast('Name, email, password required','err');
+  api({action:'addUser', name:n, email:e, password:p, role:r}).then(()=>{
+    g('au_name').value=''; g('au_email').value=''; g('au_pass').value='';
+    loadTeam(); toast('User "'+n+'" added ✔ — login details email ho gayi','ok');
+  });
+}
+function approveUser(email){
+  const sel=document.getElementById('ap_'+email.replace(/[^a-z0-9]/gi,'_'));
+  api({action:'approveUser', email:email, role:sel.value})
+    .then(()=>{ loadTeam(); toast('Approved as '+sel.value+' ✔ — email sent','ok'); });
+}
+function rejectUser(email){
+  modalConfirm({icon:'✕', title:'Reject request?', danger:true, message:email,
+    confirmText:'Reject',
+    onConfirm:()=> api({action:'rejectUser', email:email}).then(()=>{loadTeam(); toast('Rejected','ok');})});
+}
+function setUserRole(email, role){
+  api({action:'updateUser', email:email, role:role}).then(()=>toast('Role updated ✔','ok')).catch(()=>loadTeam());
+}
+function toggleUser(email, status){
+  const to=status==='Disabled'?'Active':'Disabled';
+  api({action:'updateUser', email:email, status:to}).then(()=>{loadTeam(); toast('User '+to.toLowerCase()+' ✔','ok');});
+}
+function delUser(email){
+  modalConfirm({icon:'🗑', title:'Delete user?', danger:true, message:email+' will lose access permanently.',
+    confirmText:'Delete',
+    onConfirm:()=> api({action:'deleteUser', email:email}).then(()=>{loadTeam(); toast('User deleted','ok');})});
+}
+function addRole(){
+  const n=document.getElementById('nr_name').value.trim();
+  if(!n) return toast('Role name required','err');
+  api({action:'addRole', role_name:n,
+    can_build:document.getElementById('nr_build').checked,
+    can_execute_all:document.getElementById('nr_exall').checked,
+    can_execute_assigned:document.getElementById('nr_exown').checked,
+    can_manage_team:document.getElementById('nr_team').checked
+  }).then(()=>{ document.getElementById('nr_name').value=''; loadTeam(); toast('Role created ✔','ok'); });
+}
+function setRolePerm(role,key,val){
+  const p={action:'updateRole', role_name:role}; p[key]=val;
+  api(p).then(()=>toast('Permission updated ✔','ok')).catch(()=>loadTeam());
+}
+function delRole(name){
+  modalConfirm({icon:'🗑', title:'Delete role?', danger:true, message:'"'+name+'"',
+    confirmText:'Delete',
+    onConfirm:()=> api({action:'deleteRole', role_name:name}).then(()=>{loadTeam(); toast('Role deleted','ok');})});
+}
+</script>
+</body>
+</html>
