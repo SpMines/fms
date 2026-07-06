@@ -60,7 +60,8 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18);background:rgba(255,255,255,.06)}
 .field select option{background:#13131c}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.row3{display:grid;grid-template-columns:1fr 90px 32px;gap:8px;align-items:center}
+.row3{display:grid;grid-template-columns:1fr 72px 92px 32px;gap:8px;align-items:center}
+.row3.cust{grid-template-columns:1fr 72px 92px 82px 32px}
 .chk{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
 .chk input{width:auto;accent-color:var(--accent);transform:scale(1.2)}
 .linky{background:none;border:none;color:#8fd0ff;font-size:13px;cursor:pointer;font-family:'Jost'}
@@ -608,6 +609,12 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
             <select id="f_condwhen"><option value="Yes">Yes (approved)</option><option value="No">No (rejected)</option></select></div>
         </div>
       </div>
+      <label class="chk" style="margin-top:14px"><input type="checkbox" id="f_gate" onchange="gateToggle()"> 🚧 Gate release — after this step, the order can be sent to Gate Entry</label>
+      <div id="gateConfig" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(255,181,71,.07);border:1px dashed rgba(255,181,71,.35);border-radius:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Order Gate Entry mein tabhi jayega jab ye step complete ho. Agar ye decision step hai, toh sirf is answer pe:</div>
+        <div class="field" style="margin-bottom:0"><label>Allow gate if answer</label>
+          <select id="f_gatewhen"><option value="Any">Any (just needs completing)</option><option value="Yes">Yes (approved)</option><option value="No">No (rejected)</option></select></div>
+      </div>
     </div>
     <div class="modal-acts">
       <button class="btn ghost" onclick="closeStepModal()">Cancel</button>
@@ -633,7 +640,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API ="https://script.google.com/macros/s/AKfycbyA4JCnBCqdo9gJL6m1cVGP8-d_t71CWTmQ2ZEcIsr3Eyt2nszoVDbCZFJBj4rtJFo/exec";
+const API = "https://script.google.com/macros/s/AKfycbxaJ45V4gc1B1a3Ylp1ejnK1e2WvbAh_yEaEajhdNnGmctF738AJ_kD_pwLecPpGAhP/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -722,8 +729,16 @@ try{ SESSION = JSON.parse(localStorage.getItem('fms_session_v3')||'null'); }catc
 function can(k){ return PERMS[k]===true; }
 
 /* ================= AUTH FLOW ================= */
+function pendingDeepLink(){
+  const m = String(location.hash||'').match(/order=([^&]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+function runDeepLink(){
+  const id = pendingDeepLink();
+  if(id){ history.replaceState(null,'','#'); setTimeout(()=>openOrder(id), 300); }
+}
 window.addEventListener('DOMContentLoaded', ()=>{
-  if(SESSION && SESSION.token){ onAuthed(SESSION); loadTplMap().then(loadOrders); }
+  if(SESSION && SESSION.token){ onAuthed(SESSION); loadTplMap().then(loadOrders).then(runDeepLink); }
   else showAuth('login');
 });
 function showAuth(view){
@@ -755,7 +770,7 @@ function doSignup(){
   if(!n||!e||!p) return toast('All fields required','err');
   rawApi({action:'signup', name:n, email:e, password:p}).then(d=>{
     if(!d.ok) return toast(d.error,'err');
-    if(d.data.session){ saveSession(d.data.session); toast('Super Admin account created 🎉','ok'); loadTplMap().then(loadOrders); return; }
+    if(d.data.session){ saveSession(d.data.session); toast('Super Admin account created 🎉','ok'); loadTplMap().then(loadOrders).then(runDeepLink); return; }
     OTP_EMAIL = d.data.email;
     document.getElementById('otpEmailLbl').textContent = OTP_EMAIL;
     authView('otp');
@@ -789,7 +804,7 @@ function doLogin(){
       rawApi({action:'resendOtp', email:OTP_EMAIL});
       authView('otp'); toast('Verify your email first — OTP sent','err'); return; }
     saveSession(d.data.session);
-    loadTplMap().then(loadOrders);
+    loadTplMap().then(loadOrders).then(runDeepLink);
   });
 }
 function doForgot(){
@@ -923,22 +938,35 @@ function loadOrders(){
 }
 
 /* ================= NEW ORDER ================= */
-function addItemRow(name,qty){
+function addItemRow(name,qty,unit){
   ITEM_ROW_N++;
   const id='it_'+ITEM_ROW_N;
   const wrap=document.getElementById('no_items');
   const row=document.createElement('div');
   row.className='row3'; row.style.marginBottom='8px'; row.id=id;
+  const units=['Nos','Kg','Unit','Pc','Ltr','Mtr','Box','Custom'];
+  const sel=(unit&&units.indexOf(unit)<0)?'Custom':(unit||'Nos');
   row.innerHTML=`<input placeholder="Item name" value="${esc(name||'')}" class="it_name">
-    <input type="number" min="0" step="1" placeholder="Qty" value="${qty||''}" class="it_qty">
+    <input type="number" min="0" step="any" placeholder="Qty" value="${qty||''}" class="it_qty">
+    <select class="it_unit" onchange="unitChange('${id}')">${units.map(u=>`<option ${u===sel?'selected':''}>${u}</option>`).join('')}</select>
+    <input placeholder="unit" value="${sel==='Custom'?esc(unit||''):''}" class="it_cust" style="display:${sel==='Custom'?'block':'none'}">
     <button class="icobtn red" onclick="document.getElementById('${id}').remove()">✕</button>`;
+  if(sel==='Custom') row.classList.add('cust');
   wrap.appendChild(row);
 }
+function unitChange(id){
+  const r=document.getElementById(id);
+  const isC=r.querySelector('.it_unit').value==='Custom';
+  r.querySelector('.it_cust').style.display=isC?'block':'none';
+  r.classList.toggle('cust',isC);
+}
 function collectItems(){
-  return Array.from(document.querySelectorAll('#no_items .row3')).map(r=>({
-    name: r.querySelector('.it_name').value.trim(),
-    qty: Number(r.querySelector('.it_qty').value)||0
-  })).filter(it=>it.name);
+  return Array.from(document.querySelectorAll('#no_items .row3')).map(r=>{
+    const u=r.querySelector('.it_unit').value;
+    const unit=u==='Custom'?(r.querySelector('.it_cust').value.trim()||'unit'):u;
+    return { name:r.querySelector('.it_name').value.trim(),
+      qty:Number(r.querySelector('.it_qty').value)||0, unit:unit };
+  }).filter(it=>it.name);
 }
 function openNewOrder(){
   if(ORD_KIND==='gate'){ openGateModal(); return; }
@@ -1025,7 +1053,7 @@ function renderOrderDetail(){
     const hl = (ORD_LASTQ||'').toLowerCase();
     document.getElementById('odItems').innerHTML = items.map(it=>{
       const match = hl && String(it.name).toLowerCase().includes(hl);
-      return `<tr style="${match?'background:rgba(124,92,255,.14)':''}"><td>${esc(it.name)}${match?' <span class="sc-tag t-role" style="margin-left:6px">match</span>':''}</td><td>×${esc(it.qty)}</td></tr>`;
+      return `<tr style="${match?'background:rgba(124,92,255,.14)':''}"><td>${esc(it.name)}${match?' <span class="sc-tag t-role" style="margin-left:6px">match</span>':''}</td><td>${esc(it.qty)} ${esc(it.unit||'')}</td></tr>`;
     }).join('');
   } else itemsWrap.style.display='none';
 
@@ -1259,6 +1287,10 @@ function decToggle(){
     document.getElementById('f_notarget').innerHTML = html || '<option value="">—</option>';
   }
 }
+function gateToggle(){
+  document.getElementById('gateConfig').style.display =
+    document.getElementById('f_gate').checked ? 'block' : 'none';
+}
 function condToggle(){
   const on = document.getElementById('f_iscond').checked;
   document.getElementById('condConfig').style.display = on?'block':'none';
@@ -1321,6 +1353,9 @@ function openStepModal(stepId, insertAfter){
     condToggle();
     if(s.cond_on) g('f_condon').value=s.cond_on;
     g('f_condwhen').value=s.cond_when||'Yes';
+    g('f_gate').checked=String(s.gate_release)==='true';
+    g('f_gatewhen').value=s.gate_when||'Any';
+    gateToggle();
     if(s.dep_type==='After Step') depSel.value='step::'+s.dep_value;
     else depSel.value=s.dep_type||'After Previous';
     g('f_depv').value = s.dep_type==='After Step'?'':(s.dep_value||'');
@@ -1334,6 +1369,7 @@ function openStepModal(stepId, insertAfter){
     g('f_color').value='#7c5cff'; g('f_needsdoc').checked=false;
     g('f_isdec').checked=false; g('f_noaction').value='Stop Order'; decToggle();
     g('f_iscond').checked=false; condToggle();
+    g('f_gate').checked=false; gateToggle();
     depSel.value='After Previous'; g('f_depv').value='';
     const firstEver=TSTEPS.filter(s=>String(s.enabled)!=='false').length===0;
     depSel.disabled=firstEver;
@@ -1360,7 +1396,9 @@ function saveStep(){
     no_action:g('f_isdec').checked?g('f_noaction').value:'',
     no_target:(g('f_isdec').checked&&g('f_noaction').value==='Jump to Step')?g('f_notarget').value:'',
     cond_on:g('f_iscond').checked?g('f_condon').value:'',
-    cond_when:g('f_iscond').checked?g('f_condwhen').value:'Yes' };
+    cond_when:g('f_iscond').checked?g('f_condwhen').value:'Yes',
+    gate_release:g('f_gate').checked,
+    gate_when:g('f_gate').checked?g('f_gatewhen').value:'Any' };
   const req = EDIT_ID
     ? api({action:'updateStep', step_id:EDIT_ID, step:s})
     : api({action:'createStep', wf_id:CURTPL, after_step_id:INSERT_AFTER, step:s});
