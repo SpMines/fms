@@ -378,6 +378,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <div class="nav" id="nav">
   <button class="active" data-page="orders" onclick="go('orders')">📦 Orders</button>
+  <button data-page="gate" onclick="go('gate')">🚧 Gate Entry</button>
   <button data-page="tasks" onclick="go('tasks')">✅ My Tasks <span id="taskCount" class="badge bg-Delayed" style="display:none;margin-left:4px;padding:2px 8px"></span></button>
   <button data-page="builder" onclick="go('builder')" id="builderNav" style="display:none">🧩 Templates</button>
   <button data-page="team" onclick="go('team')" id="teamNav" style="display:none">👥 Team</button>
@@ -400,7 +401,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     <div class="toolrow">
       <input type="search" id="oq" placeholder="Search orders, people, items…" onkeydown="if(event.key==='Enter')searchOrders()">
       <button class="btn sm ghost" onclick="searchOrders()">🔍 Search</button>
-      <button class="btn sm" onclick="openNewOrder()">＋ New Order</button>
+      <button class="btn sm" id="pageTitleBtn" onclick="openNewOrder()">＋ New Order</button>
     </div>
     <div class="box">
       <div class="tablewrap">
@@ -489,8 +490,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 <!-- NEW ORDER MODAL -->
 <div class="modal" id="orderModal" onclick="if(event.target===this)closeOrderModal()">
   <div class="modal-card wide">
-    <div class="modal-title" style="margin-bottom:18px">＋ New Order</div>
-    <div class="field"><label>Template *</label><select id="no_tpl"></select></div>
+    <div class="modal-title" style="margin-bottom:18px">＋ New Order — Purchase Process</div>
     <div class="row2">
     </div>
     <div class="row2">
@@ -508,6 +508,20 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     <div class="modal-acts">
       <button class="btn ghost" onclick="closeOrderModal()">Cancel</button>
       <button class="btn" onclick="createOrder()">Create — Clock Starts Now ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- GATE ENTRY MODAL -->
+<div class="modal" id="gateModal" onclick="if(event.target===this)closeGateModal()">
+  <div class="modal-card wide" style="width:min(520px,100%)">
+    <div class="modal-title" style="margin-bottom:6px">🚧 New Gate Entry</div>
+    <div class="sub" style="text-align:left;margin-bottom:16px">Purchase order ka ID daalo — uska Material Receipt flow apne steps ke saath chalu ho jayega (receiver + items auto-copy).</div>
+    <div class="field"><label>Purchase Order ID *</label><input id="gm_oid" placeholder="ORD-0001" style="text-transform:uppercase"></div>
+    <div class="field"><label>Notes</label><input id="gm_notes" placeholder="Optional — vehicle no, gate remarks…"></div>
+    <div class="modal-acts">
+      <button class="btn ghost" onclick="closeGateModal()">Cancel</button>
+      <button class="btn" onclick="createReceipt()">Create Gate Entry ▶</button>
     </div>
   </div>
 </div>
@@ -600,7 +614,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbw6RcDRE8tyrIgzU6LNlXvYypQ5bJvuCbIrXxqrhn-hRuWLss60lT9dNygj2TazHXbR/exec";
+const API = "https://script.google.com/macros/s/AKfycbz9Q9FXd7u6S8kLyybELOykWNrwEJU2sp7cMQ4_xg1lnjDUs5b0qP4ZBzbjq2OzfNoH/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -667,7 +681,22 @@ function countdownStr(deadlineIso){
 /* ================= STATE ================= */
 let SESSION=null, PERMS={}, ROLE='', ROLES=[];
 let TEMPLATES=[], CURTPL=localStorage.getItem('fms_tpl')||'', TSTEPS=[];
-let ORD_PAGE=1, ORD_STATUS='All', ORD_LASTQ='', CUR_ORDER=null, CUR_STEPS=[], UPLOAD_OS=null;
+let ORD_PAGE=1, ORD_STATUS='All', ORD_LASTQ='', ORD_KIND='purchase', CUR_ORDER=null, CUR_STEPS=[], UPLOAD_OS=null;
+let TPL_MAP={};  // {purchase: wf_id, gate: wf_id}
+function loadTplMap(){
+  return api({action:'listTemplates'}).then(list=>{
+    TEMPLATES=list;
+    list.forEach(t=>{
+      if(t.name==='Purchase Process') TPL_MAP.purchase=t.wf_id;
+      if(t.name==='Material Receipt - Security Gate') TPL_MAP.gate=t.wf_id;
+    });
+  });
+}
+function syncKindUi(){
+  const isGate = ORD_KIND==='gate';
+  document.getElementById('pageTitleBtn').textContent = isGate ? '＋ New Gate Entry' : '＋ New Order';
+  document.getElementById('oq').placeholder = isGate ? 'Search gate entries, order id…' : 'Search orders, people, items…';
+}
 let EDIT_ID=null, INSERT_AFTER=null, ITEM_ROW_N=0;
 let ODTICK=null, ODPOLL=null;
 try{ SESSION = JSON.parse(localStorage.getItem('fms_session_v3')||'null'); }catch(e){}
@@ -675,7 +704,7 @@ function can(k){ return PERMS[k]===true; }
 
 /* ================= AUTH FLOW ================= */
 window.addEventListener('DOMContentLoaded', ()=>{
-  if(SESSION && SESSION.token){ onAuthed(SESSION); loadOrders(); }
+  if(SESSION && SESSION.token){ onAuthed(SESSION); loadTplMap().then(loadOrders); }
   else showAuth('login');
 });
 function showAuth(view){
@@ -707,7 +736,7 @@ function doSignup(){
   if(!n||!e||!p) return toast('All fields required','err');
   rawApi({action:'signup', name:n, email:e, password:p}).then(d=>{
     if(!d.ok) return toast(d.error,'err');
-    if(d.data.session){ saveSession(d.data.session); toast('Super Admin account created 🎉','ok'); loadOrders(); return; }
+    if(d.data.session){ saveSession(d.data.session); toast('Super Admin account created 🎉','ok'); loadTplMap().then(loadOrders); return; }
     OTP_EMAIL = d.data.email;
     document.getElementById('otpEmailLbl').textContent = OTP_EMAIL;
     authView('otp');
@@ -741,7 +770,7 @@ function doLogin(){
       rawApi({action:'resendOtp', email:OTP_EMAIL});
       authView('otp'); toast('Verify your email first — OTP sent','err'); return; }
     saveSession(d.data.session);
-    loadOrders();
+    loadTplMap().then(loadOrders);
   });
 }
 function doForgot(){
@@ -793,8 +822,9 @@ function logout(silent){
 /* ================= NAV ================= */
 function go(p){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.page===p));
-  ['orders','tasks','builder','team'].forEach(x=>{const el=document.getElementById('page-'+x); if(el) el.style.display = x===p?'block':'none';});
-  if(p==='orders') loadOrders();
+  ['orders','tasks','builder','team'].forEach(x=>{const el=document.getElementById('page-'+x); if(el) el.style.display = (x===p||(x==='orders'&&p==='gate'))?'block':'none';});
+  if(p==='orders'){ ORD_KIND='purchase'; ORD_PAGE=1; syncKindUi(); loadOrders(); }
+  if(p==='gate'){ ORD_KIND='gate'; ORD_PAGE=1; syncKindUi(); loadOrders(); }
   if(p==='tasks') loadTasks();
   if(p==='builder') loadTemplates();
   if(p==='team') loadTeam();
@@ -874,21 +904,26 @@ function collectItems(){
   })).filter(it=>it.name);
 }
 function openNewOrder(){
-  api({action:'listTemplates'}).then(list=>{
-    TEMPLATES=list;
-    if(!list.length){
-      if(can('can_build')) return modalAlert('Pehle Templates tab mein ek template banao (steps ke saath), phir order create hoga.','No template yet','🧩');
-      return modalAlert('No workflow template exists yet — ask your admin to create one.','No template','🧩');
-    }
-    document.getElementById('no_tpl').innerHTML = list.map(t=>
-      `<option value="${t.wf_id}">${esc(t.name)} (${t.steps} steps)</option>`).join('');
-    
-    document.getElementById('no_notes').value='';
-    document.getElementById('no_receiver').value=''; document.getElementById('no_reqperson').value='';
-    document.getElementById('no_items').innerHTML=''; ITEM_ROW_N=0;
-    addItemRow();
-    document.getElementById('orderModal').classList.add('show');
-  });
+  if(ORD_KIND==='gate'){ openGateModal(); return; }
+  document.getElementById('no_notes').value='';
+  document.getElementById('no_receiver').value=''; document.getElementById('no_reqperson').value='';
+  document.getElementById('no_items').innerHTML=''; ITEM_ROW_N=0;
+  addItemRow();
+  document.getElementById('orderModal').classList.add('show');
+}
+function openGateModal(){
+  document.getElementById('gm_oid').value='';
+  document.getElementById('gm_notes').value='';
+  document.getElementById('gateModal').classList.add('show');
+}
+function closeGateModal(){ document.getElementById('gateModal').classList.remove('show'); }
+function createReceipt(){
+  const oid=document.getElementById('gm_oid').value.trim();
+  if(!oid) return toast('Purchase Order ID daalo (e.g. ORD-0001)','err');
+  api({action:'createReceipt', purchase_order_id:oid,
+    notes:document.getElementById('gm_notes').value.trim()})
+  .then(d=>{ closeGateModal(); loadOrders();
+    toast(d.order_id+' gate entry live — linked to '+oid.toUpperCase()+' 🚧','ok'); });
 }
 function closeOrderModal(){ document.getElementById('orderModal').classList.remove('show'); }
 function createOrder(){
@@ -898,7 +933,7 @@ function createOrder(){
   if(!receiver) return toast('Receiver name required','err');
   if(!reqperson) return toast('Required person required','err');
   if(!items.length) return toast('Add at least one item with quantity','err');
-  api({action:'createOrder', wf_id:document.getElementById('no_tpl').value,
+  api({action:'createOrder', wf_id:TPL_MAP.purchase||'',
     party:'',
     notes:document.getElementById('no_notes').value.trim(),
     receiver:receiver, required_person:reqperson, items:items})
@@ -942,6 +977,7 @@ function renderOrderDetail(){
   if(o.party) chips.push(`<span class="od-chip">🏢 <b>${esc(o.party)}</b></span>`);
   if(o.receiver) chips.push(`<span class="od-chip">🎯 Receiver: <b>${esc(o.receiver)}</b></span>`);
   if(o.required_person) chips.push(`<span class="od-chip">🙋 Required for: <b>${esc(o.required_person)}</b></span>`);
+  if(o.linked_order) chips.push(`<span class="od-chip" style="cursor:pointer;border-color:rgba(124,92,255,.5)" onclick="openOrder('${esc(o.linked_order)}')">🔗 Linked: <b>${esc(o.linked_order)}</b></span>`);
   if(o.drive_folder_url) chips.push(`<a class="od-drive" href="${esc(o.drive_folder_url)}" target="_blank">📁 Open Drive Folder ↗</a>`);
   document.getElementById('odMeta').innerHTML = chips.join('');
 
