@@ -544,6 +544,10 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     </div>
     <div class="od-body">
       <div id="odSteps"></div>
+      <div id="odLogWrap" style="margin-top:20px;border-top:1px solid var(--brd);padding-top:16px;display:none">
+        <h5 style="font-size:14px;font-weight:600;margin-bottom:10px">🕘 Activity — who did what</h5>
+        <div id="odLog"></div>
+      </div>
     </div>
     <div class="od-foot">
       <button class="btn ghost" onclick="closeOd()">Close</button>
@@ -640,7 +644,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbyCg8ykWIFazW32YeG8TaQbd19-_j2V1U72weQPo0GzUCxZctgWwY_WJ8iN2ZAegxLL/exec";
+const API = "https://script.google.com/macros/s/AKfycbw_i1OZvLraXEgt0sMq54nV2qQMEom6LAKrBZyNEIB8mKUtYRKgouS4yQKHijvdU0CE/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -707,7 +711,7 @@ function countdownStr(deadlineIso){
 /* ================= STATE ================= */
 let SESSION=null, PERMS={}, ROLE='', ROLES=[];
 let TEMPLATES=[], CURTPL=localStorage.getItem('fms_tpl')||'', TSTEPS=[];
-let ORD_PAGE=1, ORD_STATUS='All', ORD_LASTQ='', ORD_KIND='purchase', CUR_ORDER=null, CUR_STEPS=[], UPLOAD_OS=null;
+let ORD_PAGE=1, ORD_STATUS='All', ORD_LASTQ='', ORD_KIND='purchase', CUR_ORDER=null, CUR_STEPS=[], CUR_LOG=[], UPLOAD_OS=null;
 let TPL_MAP={};  // {purchase: wf_id, gate: wf_id}
 function loadTplMap(){
   return api({action:'listTemplates'}).then(list=>{
@@ -1027,7 +1031,7 @@ function openOrder(id){
 function fetchAndRenderOrder(id, showLoaderFlag){
   const call = showLoaderFlag ? api({action:'getOrder', order_id:id}) : apiSilent({action:'getOrder', order_id:id});
   return call.then(d=>{
-    CUR_ORDER=d.order; CUR_STEPS=d.steps;
+    CUR_ORDER=d.order; CUR_STEPS=d.steps; CUR_LOG=d.log||[];
     renderOrderDetail();
   }).catch(()=>{});
 }
