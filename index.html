@@ -555,7 +555,13 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 <!-- STEP MODAL (template) -->
 <div class="modal" id="stepModal" onclick="if(event.target===this)closeStepModal()">
   <div class="modal-card wide">
-    <div class="modal-title" id="stepModalTitle" style="margin-bottom:18px">Add Step</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px">
+      <div class="modal-title" id="stepModalTitle" style="margin-bottom:0">Add Step</div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn sm ghost" onclick="closeStepModal()">Cancel</button>
+        <button class="btn sm" onclick="saveStep()">✓ Save Step</button>
+      </div>
+    </div>
     <div class="field"><label>Step Name *</label><input id="f_name" placeholder="e.g. Quotation Upload"></div>
     <div class="field"><label>Description</label><textarea id="f_desc" placeholder="What happens in this step…"></textarea></div>
     <div class="row2">
@@ -603,6 +609,9 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
         </div>
       </div>
     </div>
+    <div class="modal-acts">
+      <button class="btn ghost" onclick="closeStepModal()">Cancel</button>
+      <button class="btn" onclick="saveStep()">✓ Save Step</button>
     </div>
   </div>
 </div>
@@ -624,7 +633,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbyA4JCnBCqdo9gJL6m1cVGP8-d_t71CWTmQ2ZEcIsr3Eyt2nszoVDbCZFJBj4rtJFo/exec";
+const API ="https://script.google.com/macros/s/AKfycbyA4JCnBCqdo9gJL6m1cVGP8-d_t71CWTmQ2ZEcIsr3Eyt2nszoVDbCZFJBj4rtJFo/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
