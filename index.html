@@ -82,6 +82,32 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 @media(max-width:900px){ .content{padding:16px 14px 90px} }
 
 .authwrap{position:relative;z-index:1;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+
+/* ===== SPLIT LOGIN (Ikxari style) ===== */
+.auth-split{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 1fr;width:min(940px,100%);border-radius:26px;overflow:hidden;border:1px solid var(--brd);box-shadow:0 34px 90px rgba(0,0,0,.6);animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
+.auth-left{background:linear-gradient(160deg,rgba(124,92,255,.16),rgba(13,13,24,.7) 55%),rgba(13,13,24,.6);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);padding:42px 38px;display:flex;flex-direction:column}
+.al-brand{margin-bottom:26px}
+.al-head{font-size:27px;font-weight:800;line-height:1.25;letter-spacing:-.4px;margin-bottom:10px}
+.al-sub{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:24px}
+.al-feats{display:flex;flex-direction:column;gap:13px}
+.al-feat{display:flex;gap:11px;align-items:center;font-size:13.5px;color:#d9dcea}
+.al-feat span{width:34px;height:34px;flex-shrink:0;border-radius:10px;background:rgba(124,92,255,.14);border:1px solid rgba(124,92,255,.3);display:flex;align-items:center;justify-content:center;font-size:15px}
+.al-credit{margin-top:auto;padding-top:26px;font-size:12px;color:#5d6379}
+.auth-right{background:rgba(20,20,32,.92);padding:42px 36px;display:flex;flex-direction:column;justify-content:center}
+.ar-head{font-size:24px;font-weight:800;margin-bottom:4px}
+.auth-right .sub{margin-bottom:20px}
+.pwrap{position:relative}
+.pwrap input{padding-right:44px}
+.peye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:none;background:transparent;color:#5d6379;font-size:16px;cursor:pointer;border-radius:8px}
+.peye:hover{color:#fff;background:rgba(255,255,255,.06)}
+@media(max-width:820px){
+  .auth-split{grid-template-columns:1fr}
+  .auth-left{padding:30px 26px 22px}
+  .al-head{font-size:22px}
+  .al-feats{display:none}
+  .auth-right{padding:26px 24px 34px}
+}
+
 /* ===== CINEMATIC LAYER ===== */
 .auth-aurora{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
 .auth-aurora::before,.auth-aurora::after{content:'';position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(90px);opacity:.5;mix-blend-mode:screen}
@@ -91,32 +117,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 @keyframes aur2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8vmax,-5vmax) scale(1.2)}}
 .authcard{position:relative;z-index:1;animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
-
-/* v3.4 — split-card login (dark brand panel + white form panel), matches Ikxari-style reference */
-.auth-split{position:relative;z-index:1;width:min(920px,100%);display:grid;grid-template-columns:1fr 1fr;
-  border-radius:24px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.55);animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
-.auth-left{background:linear-gradient(160deg,#1b1030,#0d0d18);padding:44px 40px;display:flex;flex-direction:column;justify-content:center}
-.auth-left .brandrow{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-.auth-left .dot{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 10px 30px rgba(124,92,255,.5);flex-shrink:0}
-.auth-left .brandname{font-size:18px;font-weight:700}
-.auth-left .brandtag{font-size:11.5px;color:var(--muted)}
-.auth-left h2{font-size:26px;font-weight:700;line-height:1.25;margin-bottom:14px;color:#fff}
-.auth-left p{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:26px}
-.auth-feat{display:flex;align-items:center;gap:12px;font-size:13.5px;color:#e6e7f0;margin-bottom:14px}
-.auth-feat .fi{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.auth-right{background:#f4f4f9;padding:44px 40px;color:#181822}
-.auth-right h3{font-size:22px;font-weight:700;margin-bottom:4px;color:#181822}
-.auth-right .sub{text-align:left;font-size:13px;color:#6b6f80;margin-bottom:22px}
-.auth-right .field label{color:#6b6f80}
-.auth-right .field input{background:#fff;border:1px solid #e3e3ec;color:#181822}
-.auth-right .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.15);background:#fff}
-.auth-right .field input::placeholder{color:#a3a6b5}
-.auth-right .linky{color:#6c4bff}
-.auth-right .credit{color:#a3a6b5}
-@media(max-width:820px){
-  .auth-split{grid-template-columns:1fr}
-  .auth-left{display:none}
-}
 .auth-brand{text-align:center;margin-bottom:20px}
 .dot.big{width:60px;height:60px;border-radius:18px;font-size:22px;margin:0 auto 14px;box-shadow:0 12px 40px rgba(124,92,255,.6);animation:floaty 4s ease-in-out infinite}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -172,6 +172,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 .bg-Running{background:rgba(70,181,255,.16);color:#8fd0ff;border:1px solid rgba(70,181,255,.4)}
 .bg-Completed{background:rgba(55,211,153,.16);color:#7fe9c0;border:1px solid rgba(55,211,153,.4)}
 .bg-Delayed{background:rgba(255,93,108,.16);color:#ff97a2;border:1px solid rgba(255,93,108,.4)}
+.bg-Stopped{background:rgba(255,181,71,.16);color:#ffc875;border:1px solid rgba(255,181,71,.4)}
 .bg-Owner,.bg-Admin{background:rgba(124,92,255,.18);color:#c9bdff;border:1px solid rgba(124,92,255,.4)}
 .bg-Role{background:rgba(154,160,180,.14);color:#c2c7d6;border:1px solid rgba(154,160,180,.3)}
 
@@ -294,65 +295,76 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
   <div class="auth-aurora"></div>
   <div class="auth-split">
     <div class="auth-left">
-      <div class="brandrow"><div class="dot">SP</div><div><div class="brandname">SP FMS</div><div class="brandtag">Flow Management System</div></div></div>
-      <h2>Flow Management,<br>minus the chaos.</h2>
-      <p>Every order gets a live clock, a locked step-by-step workflow, and an auto-organised Drive folder — secured with role-based access.</p>
-      <div class="auth-feat"><span class="fi">⏱</span> Live order tracking &amp; TAT clocks</div>
-      <div class="auth-feat"><span class="fi">🔒</span> Strictly sequential, locked workflow steps</div>
-      <div class="auth-feat"><span class="fi">📁</span> Auto Google Drive folder per order</div>
-      <div class="auth-feat"><span class="fi">📧</span> Email alerts when a step is due</div>
+      <div class="al-brand">
+        <div class="dot big" style="margin:0 0 12px">SP</div>
+        <div class="auth-name">SP FMS</div>
+        <div class="auth-tag">Flow Management System</div>
+      </div>
+      <h2 class="al-head">Every order. Every step.<br>Right on time.</h2>
+      <p class="al-sub">Orders, approvals, documents and deadlines — one flow, zero chaos.</p>
+      <div class="al-feats">
+        <div class="al-feat"><span>⏱</span> Auto TAT clock — no manual starts, ever</div>
+        <div class="al-feat"><span>🛡️</span> Role-based approvals with instant email alerts</div>
+        <div class="al-feat"><span>📁</span> One-tap document uploads, auto-filed in Drive</div>
+        <div class="al-feat"><span>🔀</span> Decision steps that route the flow for you</div>
+      </div>
+      <div class="al-credit">Built by Somnath Karmakar</div>
     </div>
     <div class="auth-right">
-
-    <div id="v_login">
-      <h3>Welcome back</h3>
-      <div class="sub" id="authSub">Sign in to your SP FMS account.</div>
-      <div class="field"><label>Email</label><input id="lg_email" type="email" placeholder="you@company.com"></div>
-      <div class="field"><label>Password</label><input id="lg_pass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn" onclick="doLogin()">Sign In</button>
-      <div class="authfoot">
-        <button class="linky" onclick="authView('forgot')">Forgot password?</button> ·
-        <button class="linky" onclick="authView('signup')">New here? Create one</button>
+      <div id="v_login">
+        <h3 class="ar-head">Welcome back</h3>
+        <div class="sub" id="authSub" style="text-align:left"></div>
+        <div class="field"><label>Email</label><input id="lg_email" type="email" placeholder="you@company.com"></div>
+        <div class="field"><label>Password</label>
+          <div class="pwrap"><input id="lg_pass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="peye" type="button" onclick="peek('lg_pass',this)">👁</button></div>
+          <div style="text-align:right;margin-top:6px"><button class="linky" onclick="authView('forgot')">Forgot password?</button></div>
+        </div>
+        <button class="btn" onclick="doLogin()">Sign In</button>
+        <div class="authfoot">No account? <button class="linky" onclick="authView('signup')">Create one</button></div>
       </div>
-    </div>
 
-    <div id="v_signup" style="display:none">
-      <h3>Create account</h3>
-      <div class="field"><label>Full Name</label><input id="su_name" placeholder="Your name"></div>
-      <div class="field"><label>Email</label><input id="su_email" type="email" placeholder="you@company.com"></div>
-      <div class="field"><label>Password</label><input id="su_pass" type="password" placeholder="Make it strong (min 4)"></div>
-      <button class="btn" onclick="doSignup()">Create account</button>
-      <div class="authfoot"><button class="linky" onclick="authView('login')">Already have one? Sign in</button></div>
-    </div>
-
-    <div id="v_otp" style="display:none">
-      <h3>Verify email</h3>
-      <div class="field"><label>Code sent to <b id="otpEmailLbl"></b></label>
-        <input id="ot_code" inputmode="numeric" placeholder="6-digit code"></div>
-      <button class="btn" onclick="doVerifyOtp()">Verify</button>
-      <div class="authfoot">
-        <button class="linky" onclick="doResendOtp()">Resend code</button> ·
-        <button class="linky" onclick="authView('login')">Back</button>
+      <div id="v_signup" style="display:none">
+        <h3 class="ar-head">Create account</h3>
+        <div class="sub" style="text-align:left">An admin approves you, then you're in.</div>
+        <div class="field"><label>Full Name</label><input id="su_name" placeholder="Your name"></div>
+        <div class="field"><label>Email</label><input id="su_email" type="email" placeholder="you@company.com"></div>
+        <div class="field"><label>Password</label>
+          <div class="pwrap"><input id="su_pass" type="password" placeholder="Make it strong (min 4)">
+          <button class="peye" type="button" onclick="peek('su_pass',this)">👁</button></div></div>
+        <button class="btn" onclick="doSignup()">Create account</button>
+        <div class="authfoot"><button class="linky" onclick="authView('login')">Already have one? Sign in</button></div>
       </div>
-    </div>
 
-    <div id="v_forgot" style="display:none">
-      <h3>Reset password</h3>
-      <div class="field"><label>Email</label><input id="fg_email" type="email" placeholder="you@company.com"></div>
-      <button class="btn" onclick="doForgot()">Send reset code</button>
-      <div class="authfoot"><button class="linky" onclick="authView('login')">Back</button></div>
-    </div>
+      <div id="v_otp" style="display:none">
+        <h3 class="ar-head">Check your inbox</h3>
+        <div class="sub" style="text-align:left">Code sent to <b id="otpEmailLbl"></b></div>
+        <div class="field"><label>Verification code</label><input id="ot_code" inputmode="numeric" placeholder="6-digit code"></div>
+        <button class="btn" onclick="doVerifyOtp()">Verify</button>
+        <div class="authfoot">
+          <button class="linky" onclick="doResendOtp()">Resend code</button> ·
+          <button class="linky" onclick="authView('login')">Back</button>
+        </div>
+      </div>
 
-    <div id="v_reset" style="display:none">
-      <h3>Set new password</h3>
-      <div class="field"><label>OTP sent to <b id="rsEmailLbl"></b></label>
-        <input id="rs_code" inputmode="numeric" placeholder="6-digit OTP"></div>
-      <div class="field"><label>New Password</label><input id="rs_pass" type="password" placeholder="New password"></div>
-      <button class="btn" onclick="doReset()">Reset Password</button>
-      <div class="authfoot"><button class="linky" onclick="authView('login')">Back to sign in</button></div>
-    </div>
+      <div id="v_forgot" style="display:none">
+        <h3 class="ar-head">Reset password</h3>
+        <div class="sub" style="text-align:left">We'll email you a reset code.</div>
+        <div class="field"><label>Email</label><input id="fg_email" type="email" placeholder="you@company.com"></div>
+        <button class="btn" onclick="doForgot()">Send reset code</button>
+        <div class="authfoot"><button class="linky" onclick="authView('login')">Back to sign in</button></div>
+      </div>
 
-    <div class="credit">Built by <b>Somnath Karmakar</b></div>
+      <div id="v_reset" style="display:none">
+        <h3 class="ar-head">New password</h3>
+        <div class="sub" style="text-align:left">Code sent to <b id="rsEmailLbl"></b></div>
+        <div class="field"><label>Code</label><input id="rs_code" inputmode="numeric" placeholder="6-digit code"></div>
+        <div class="field"><label>New Password</label>
+          <div class="pwrap"><input id="rs_pass" type="password" placeholder="New password">
+          <button class="peye" type="button" onclick="peek('rs_pass',this)">👁</button></div></div>
+        <button class="btn" onclick="doReset()">Reset password</button>
+        <div class="authfoot"><button class="linky" onclick="authView('login')">Back to sign in</button></div>
+      </div>
     </div>
   </div>
 </div>
@@ -366,6 +378,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <div class="nav" id="nav">
   <button class="active" data-page="orders" onclick="go('orders')">📦 Orders</button>
+  <button data-page="tasks" onclick="go('tasks')">✅ My Tasks <span id="taskCount" class="badge bg-Delayed" style="display:none;margin-left:4px;padding:2px 8px"></span></button>
   <button data-page="builder" onclick="go('builder')" id="builderNav" style="display:none">🧩 Templates</button>
   <button data-page="team" onclick="go('team')" id="teamNav" style="display:none">👥 Team</button>
 </div>
@@ -400,6 +413,14 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
         </table>
       </div>
       <div class="pager" id="pager"></div>
+    </div>
+  </div>
+
+  <!-- MY TASKS -->
+  <div id="page-tasks" style="display:none">
+    <div class="box">
+      <h4>✅ Steps waiting on you</h4>
+      <div id="taskList"></div>
     </div>
   </div>
 
@@ -471,6 +492,8 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     <div class="modal-title" style="margin-bottom:18px">＋ New Order</div>
     <div class="field"><label>Template *</label><select id="no_tpl"></select></div>
     <div class="row2">
+    </div>
+    <div class="row2">
       <div class="field"><label>Receiver Name *</label><input id="no_receiver" placeholder="Who receives / raises this order"></div>
       <div class="field"><label>Required Person *</label><input id="no_reqperson" placeholder="Person this is required for"></div>
     </div>
@@ -538,22 +561,19 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     </div>
     <div class="field" style="margin-bottom:16px">
       <label class="chk"><input type="checkbox" id="f_needsdoc"> 📄 Show a document slot on this step (optional — people can attach a file, not mandatory)</label>
-    </div>
-    <div class="field" style="margin-bottom:10px">
-      <label class="chk"><input type="checkbox" id="f_isdecision" onchange="decisionHint()"> 🔀 This is a Decision step (Doer answers Yes / No)</label>
-    </div>
-    <div id="f_decision_box" style="display:none;background:var(--inp);border:1px solid var(--brd);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div class="field" style="margin-bottom:0">
-        <label>If answer is <b>No</b>, then:</label>
-        <select id="f_no_action" onchange="decisionHint()">
-          <option value="stop">🛑 Stop the order here (remaining steps skipped)</option>
-          <option value="goto">↪ Jump to another step</option>
-          <option value="complete">✅ Mark the whole order Completed here</option>
-        </select>
-      </div>
-      <div class="field" id="f_no_target_wrap" style="margin:10px 0 0;display:none">
-        <label>Jump to which step?</label>
-        <select id="f_no_target"></select>
+      <label class="chk" style="margin-top:10px"><input type="checkbox" id="f_isdec" onchange="decToggle()"> 🔀 Decision step — doer chooses Yes / No</label>
+      <div id="decConfig" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(124,92,255,.06);border:1px dashed rgba(124,92,255,.35);border-radius:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">✓ YES → flow normally continues to the next step.<br>✕ NO → what happens?</div>
+        <div class="row2">
+          <div class="field" style="margin-bottom:0"><label>If NO</label>
+            <select id="f_noaction" onchange="decToggle()">
+              <option>Stop Order</option>
+              <option>Complete Order</option>
+              <option>Jump to Step</option>
+            </select></div>
+          <div class="field" id="noTargetWrap" style="margin-bottom:0;display:none"><label>Jump to</label>
+            <select id="f_notarget"></select></div>
+        </div>
       </div>
     </div>
     <div class="modal-acts">
@@ -580,7 +600,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbypTM7f2V2ljpOsAq2bmbcIA0wjTF2Keq4WqKS9REXaqpCtuRfEtcIZZZ-sGrhHkKeI/exec";
+const API = "https://script.google.com/macros/s/AKfycbw6RcDRE8tyrIgzU6LNlXvYypQ5bJvuCbIrXxqrhn-hRuWLss60lT9dNygj2TazHXbR/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -674,6 +694,11 @@ function authView(v){
     reset:'Enter the code and set a new password.'
   }[v];
 }
+function peek(id, btn){
+  const i=document.getElementById(id);
+  i.type = i.type==='password'?'text':'password';
+  btn.style.color = i.type==='text'?'#8fd0ff':'#5d6379';
+}
 let OTP_EMAIL='';
 function doSignup(){
   const n=document.getElementById('su_name').value.trim();
@@ -740,7 +765,7 @@ function doReset(){
   });
 }
 function saveSession(s){
-  SESSION={name:s.name,email:s.email,token:s.token,role:s.role,perms:s.perms,roles:s.roles};
+  SESSION={name:s.name,email:s.email,token:s.token};
   localStorage.setItem('fms_session_v3', JSON.stringify(SESSION));
   onAuthed(s);
 }
@@ -752,21 +777,8 @@ function onAuthed(s){
   document.getElementById('app').style.display='block';
   document.getElementById('builderNav').style.display = can('can_build')?'':'none';
   document.getElementById('teamNav').style.display = can('can_manage_team')?'':'none';
-  // v3.3 fix: the old check here ("if(!s.perms) rawApi({action:'login'})") never actually
-  // refreshed anything — a bare {action:'login'} with no email/password just fails auth
-  // silently. That's why, after a page refresh, a Project Manager (or any non-owner role)
-  // could see a step assigned to them as "Running" but had NO Accept/Mark Done button —
-  // ROLE/PERMS were stuck empty until a full manual re-login. Now we always do a real
-  // silent refresh against the current token, so role/permission changes (or a plain
-  // browser refresh) never leave the app in a permission-less state.
-  apiSilent({action:'whoami'}).then(d=>{
-    ROLE=d.role||ROLE; PERMS=d.perms||PERMS; ROLES=d.roles||ROLES;
-    SESSION.role=ROLE; SESSION.perms=PERMS; SESSION.roles=ROLES;
-    localStorage.setItem('fms_session_v3', JSON.stringify(SESSION));
-    document.getElementById('userRole').textContent= ROLE?('· '+ROLE):'';
-    document.getElementById('builderNav').style.display = can('can_build')?'':'none';
-    document.getElementById('teamNav').style.display = can('can_manage_team')?'':'none';
-  }).catch(()=>{});
+  // role/perm info may be stale on restore — refresh silently
+  if(!s.perms) rawApi({action:'login'}); 
 }
 function logoutConfirm(){
   modalConfirm({icon:'⏻', title:'Sign out?', message:'', confirmText:'Sign Out', onConfirm:()=>logout(false)});
@@ -781,8 +793,9 @@ function logout(silent){
 /* ================= NAV ================= */
 function go(p){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.page===p));
-  ['orders','builder','team'].forEach(x=>document.getElementById('page-'+x).style.display = x===p?'block':'none');
+  ['orders','tasks','builder','team'].forEach(x=>{const el=document.getElementById('page-'+x); if(el) el.style.display = x===p?'block':'none';});
   if(p==='orders') loadOrders();
+  if(p==='tasks') loadTasks();
   if(p==='builder') loadTemplates();
   if(p==='team') loadTeam();
 }
@@ -816,7 +829,8 @@ function loadOrders(){
       stat('All Orders',c.all,'All','var(--accent)') +
       stat('Running',c.running,'Running','var(--accent2)') +
       stat('Delayed',c.delayed,'Delayed','var(--danger)') +
-      stat('Completed',c.completed,'Completed','var(--ok)');
+      stat('Completed',c.completed,'Completed','var(--ok)') +
+      stat('Stopped',c.stopped||0,'Stopped','var(--warn)');
 
     document.getElementById('orderRows').innerHTML = d.orders.length ? d.orders.map(o=>{
       const pct = o.total? Math.round(o.done/o.total*100):0;
@@ -868,6 +882,7 @@ function openNewOrder(){
     }
     document.getElementById('no_tpl').innerHTML = list.map(t=>
       `<option value="${t.wf_id}">${esc(t.name)} (${t.steps} steps)</option>`).join('');
+    
     document.getElementById('no_notes').value='';
     document.getElementById('no_receiver').value=''; document.getElementById('no_reqperson').value='';
     document.getElementById('no_items').innerHTML=''; ITEM_ROW_N=0;
@@ -884,6 +899,7 @@ function createOrder(){
   if(!reqperson) return toast('Required person required','err');
   if(!items.length) return toast('Add at least one item with quantity','err');
   api({action:'createOrder', wf_id:document.getElementById('no_tpl').value,
+    party:'',
     notes:document.getElementById('no_notes').value.trim(),
     receiver:receiver, required_person:reqperson, items:items})
   .then(d=>{ closeOrderModal(); loadOrders(); toast(d.order_id+' is live — Step 1 done, clock\'s ticking on Step 2 ⏱','ok'); });
@@ -926,7 +942,6 @@ function renderOrderDetail(){
   if(o.party) chips.push(`<span class="od-chip">🏢 <b>${esc(o.party)}</b></span>`);
   if(o.receiver) chips.push(`<span class="od-chip">🎯 Receiver: <b>${esc(o.receiver)}</b></span>`);
   if(o.required_person) chips.push(`<span class="od-chip">🙋 Required for: <b>${esc(o.required_person)}</b></span>`);
-  if(o.outcome) chips.push(`<span class="od-chip" style="color:#ffc875;border-color:rgba(255,181,71,.35)">${o.outcome==='Stopped'?'🛑 Stopped early':'✅ Completed early'} (decision)</span>`);
   if(o.drive_folder_url) chips.push(`<a class="od-drive" href="${esc(o.drive_folder_url)}" target="_blank">📁 Open Drive Folder ↗</a>`);
   document.getElementById('odMeta').innerHTML = chips.join('');
 
@@ -943,42 +958,37 @@ function renderOrderDetail(){
 
   document.getElementById('odSteps').innerHTML = steps.map(s=>{
     const locked = s.live==='Locked' || s.live==='Pending';
-    const skipped = s.live==='Skipped';
     const cls = s.live==='Completed'?'done':s.live==='Delayed'?'late':s.live==='Running'?'run':'';
     const mine = can('can_execute_all') || (can('can_execute_assigned') && s.role===ROLE);
-    const actionable = mine && !locked && !skipped && (s.live==='Running'||s.live==='Delayed');
+    const actionable = mine && !locked && (s.live==='Running'||s.live==='Delayed');
     const wantsDoc = String(s.needs_doc)==='true';
-    const isDecision = String(s.is_decision)==='true';
     let act='';
-    if(actionable && isDecision){
-      act = `<button class="btn sm" style="background:linear-gradient(135deg,#37d399,#2bb383)" onclick="decideStep('${s.os_id}','Yes')">✅ Yes</button>`
-          + `<button class="btn sm danger" onclick="decideStep('${s.os_id}','No')">❌ No</button>`;
-    } else if(actionable){
+    if(actionable){
       // doc is optional now — attach anytime, complete with Mark Done
-      act = `<button class="btn sm ghost" onclick="pickFile('${s.os_id}')">📎 ${s.doc_url?'Replace':'Attach'}</button>`
+      act = String(s.is_decision)==='true'
+        ? `<button class="btn sm" onclick="decideStep('${s.os_id}','Yes','${CUR_ORDER.order_id}')">✓ Yes</button>
+           <button class="btn sm danger" onclick="decideStep('${s.os_id}','No','${CUR_ORDER.order_id}')">✕ No</button>`
+        : `<button class="btn sm ghost" onclick="pickFile('${s.os_id}')">📎 ${s.doc_url?'Replace':'Attach'}</button>`
           + `<button class="btn sm" onclick="markDone('${s.os_id}')">✓ Done</button>`;
-    } else if(skipped){
-      act = `<span class="osub">— skipped —</span>`;
     } else if(locked){
       act = `<span class="osub">🔒 Locked</span>`;
     } else if((s.live==='Running'||s.live==='Delayed') && !mine){
       act = `<span class="osub">${esc(s.role)||'—'}</span>`;
     }
     const showCountdown = (s.live==='Running'||s.live==='Delayed');
-    return `<div class="ostep ${locked||skipped?'locked':''}">
-        <div class="oseq ${cls}">${s.live==='Completed'?'✓':skipped?'—':locked?'🔒':s.seq}</div>
+    return `<div class="ostep ${locked?'locked':''}">
+        <div class="oseq ${cls}">${s.live==='Completed'?'✓':locked?'🔒':s.seq}</div>
         <div class="m">
-          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''} ${isDecision?'<span class="sc-tag t-role" style="margin:0 0 0 6px;background:rgba(255,181,71,.12);border-color:rgba(255,181,71,.35);color:#ffc875">🔀 Decision</span>':''}</div>
+          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''}</div>
           <div class="dd">
             ${s.role?'🛡️ '+esc(s.role)+' · ':''}⏱ ${hrs(s.tat_mins)}
-            ${s.decision_answer?` · answered <b>${esc(s.decision_answer)}</b>`:''}
-            ${s.done_ts?` · ✅ ${fmtDT(s.done_ts)} · ${esc(s.done_by)}`:''}
+            ${s.done_ts?` · ${s.decision==='Skipped'?'↷ skipped':'✅ '+fmtDT(s.done_ts)+' · '+esc(s.done_by)}`:''}${s.decision&&s.decision!=='Skipped'?` · 🔀 chose <b>${esc(s.decision)}</b>`:''}
           </div>
           ${showCountdown?`<div class="countdown" data-deadline="${esc(s.deadline_ts)}">${countdownStr(s.deadline_ts)}</div>`:''}
           ${s.doc_url?`<div class="doc">📎 <a href="${esc(s.doc_url)}" target="_blank">${esc(s.doc_name)||'Document'}</a></div>`:''}
         </div>
         <div class="acts">
-          <span class="badge bg-${skipped?'Locked':locked?'Locked':s.live}">${skipped?'Skipped':locked?'Locked':s.live}</span>
+          <span class="badge bg-${s.decision==='Skipped'?'Pending':s.live}">${s.decision==='Skipped'?'Skipped':(locked?'Locked':s.live)}</span>
           ${act}
         </div>
       </div>`;
@@ -993,10 +1003,6 @@ function markDone(osId){
   api({action:'completeOrderStep', os_id:osId})
     .then(()=>{ toast('Step completed ✔ — next step clock started','ok'); fetchAndRenderOrder(CUR_ORDER.order_id, true); });
 }
-function decideStep(osId, answer){
-  api({action:'decideStep', os_id:osId, answer:answer})
-    .then(()=>{ toast(answer==='Yes'?'Marked Yes ✔ — moving on':'Marked No — order routed per the No-branch','ok'); fetchAndRenderOrder(CUR_ORDER.order_id, true); });
-}
 function pickFile(osId){ UPLOAD_OS=osId; document.getElementById('fileInput').value=''; document.getElementById('fileInput').click(); }
 function fileChosen(inp){
   const f = inp.files && inp.files[0];
@@ -1006,8 +1012,10 @@ function fileChosen(inp){
   r.onload = ()=>{
     const b64 = String(r.result).split(',')[1];
     api({action:'uploadDoc', os_id:UPLOAD_OS, filename:f.name, mimeType:f.type, data:b64})
-      .then(d=>{ toast(d.completed?'Document uploaded → step completed ✔':'Document uploaded ✔','ok');
-        fetchAndRenderOrder(CUR_ORDER.order_id, true); });
+      .then(d=>{ toast('Document uploaded ✔','ok');
+        if(CUR_ORDER && document.getElementById('odModal').classList.contains('show'))
+          fetchAndRenderOrder(CUR_ORDER.order_id, true);
+        if(TASK_ORDER){ loadTasks(); TASK_ORDER=''; } });
   };
   r.readAsDataURL(f);
 }
@@ -1018,6 +1026,52 @@ function deleteOrder(){
     onConfirm:()=> api({action:'deleteOrder', order_id:CUR_ORDER.order_id})
       .then(()=>{ stopOdTimers(); document.getElementById('odModal').classList.remove('show'); loadOrders(); toast('Order deleted','ok'); })
   });
+}
+
+
+/* ================= MY TASKS ================= */
+function loadTasks(){
+  api({action:'myTasks'}).then(d=>{
+    const badge=document.getElementById('taskCount');
+    if(d.tasks.length){ badge.style.display='inline-block'; badge.textContent=d.tasks.length; }
+    else badge.style.display='none';
+    document.getElementById('taskList').innerHTML = d.tasks.length ? d.tasks.map(t=>{
+      const acts = t.is_decision
+        ? `<button class="btn sm" onclick="event.stopPropagation();decideStep('${t.os_id}','Yes','${t.order_id}')">✓ Yes</button>
+           <button class="btn sm danger" onclick="event.stopPropagation();decideStep('${t.os_id}','No','${t.order_id}')">✕ No</button>`
+        : `<button class="btn sm ghost" onclick="event.stopPropagation();pickFileTask('${t.os_id}','${t.order_id}')">📎</button>
+           <button class="btn sm" onclick="event.stopPropagation();doneFromTask('${t.os_id}','${t.order_id}')">✓ Done</button>`;
+      return `<div class="hrow" style="cursor:pointer" onclick="openOrder('${t.order_id}')">
+        <div class="ic">${t.is_decision?'🔀':'⏳'}</div>
+        <div><div><b>${esc(t.name)}</b> <span class="osub">· ${esc(t.order_id)} · ${esc(t.receiver)||''}</span></div>
+          <div class="d ${t.live==='Delayed'?'':''}" style="${t.live==='Delayed'?'color:#ff97a2':''}">
+            ${t.live==='Delayed'?'⚠ Past deadline':'⏳ Due'}: ${fmtDT(t.deadline_ts)}</div></div>
+        <div class="acts">${acts}</div>
+      </div>`;
+    }).join('') : '<div class="empty"><div class="big">🎉</div>All clear. Nothing is waiting on you.</div>';
+  });
+}
+function doneFromTask(osId, orderId){
+  api({action:'completeOrderStep', os_id:osId})
+    .then(()=>{ toast('Done ✓ — next step is live','ok'); loadTasks(); });
+}
+let TASK_ORDER='';
+function pickFileTask(osId, orderId){ TASK_ORDER=orderId; UPLOAD_OS=osId; document.getElementById('fileInput').value=''; document.getElementById('fileInput').click(); }
+function decideStep(osId, choice, orderId){
+  const run = ()=> api({action:'completeOrderStep', os_id:osId, choice:choice}).then(d=>{
+    const msg = d.outcome==='stopped' ? 'Order stopped ⛔'
+      : d.outcome==='completed' ? 'Order completed — remaining steps skipped 🎉'
+      : String(d.outcome).startsWith('jumped') ? 'Jumped ahead — skipped steps in between ↷'
+      : 'Decision saved ✓ — flow continues';
+    toast(msg, d.outcome==='stopped'?'err':'ok');
+    if(document.getElementById('page-tasks').style.display!=='none') loadTasks();
+    if(CUR_ORDER && CUR_ORDER.order_id===orderId) fetchAndRenderOrder(orderId, true);
+  });
+  if(choice==='No'){
+    modalConfirm({icon:'🔀', title:'Confirm: NO', danger:true,
+      message:'NO chuna toh flow decision ke configured raste pe jayega (stop / skip / complete). Pakka?',
+      confirmText:'Yes, choose NO', onConfirm:run});
+  } else run();
 }
 
 /* ================= TEMPLATES (builder) ================= */
@@ -1085,7 +1139,6 @@ function renderFlow(){
         <span class="sc-tag t-dep">🔗 ${esc(depLabel(s))}</span>
         ${s.role?`<span class="sc-tag t-role">🛡️ ${esc(s.role)}</span>`:''}
         ${String(s.needs_doc)==='true'?'<span class="sc-tag t-doc">📄 Doc slot</span>':''}
-        ${String(s.is_decision)==='true'?'<span class="sc-tag t-role" style="background:rgba(255,181,71,.12);border-color:rgba(255,181,71,.35);color:#ffc875">🔀 Decision (Yes/No)</span>':''}
       </div>
       <div class="sc-acts">
         <button class="icobtn" title="Edit" onclick="openStepModal('${s.step_id}')">✏️</button>
@@ -1120,6 +1173,19 @@ function dropCard(e){
     .then(()=>loadTemplate()).then(()=>toast('Steps reordered ✔','ok'));
 }
 
+function decToggle(){
+  const on = document.getElementById('f_isdec').checked;
+  document.getElementById('decConfig').style.display = on?'block':'none';
+  const jump = document.getElementById('f_noaction').value==='Jump to Step';
+  document.getElementById('noTargetWrap').style.display = jump?'block':'none';
+  if(jump){
+    let html=''; let n=0;
+    TSTEPS.forEach(s=>{ if(String(s.enabled)==='false') return; n++;
+      if(s.step_id===EDIT_ID) return;
+      html+=`<option value="${s.step_id}">Step ${n} — ${esc(s.name)}</option>`; });
+    document.getElementById('f_notarget').innerHTML = html || '<option value="">—</option>';
+  }
+}
 function depHint(){
   const v=document.getElementById('f_dep').value;
   const l=document.getElementById('f_depv_lbl');
@@ -1146,23 +1212,6 @@ function buildRoleOptions(sel, selected, includeEmpty){
   ROLES.forEach(r=>{ html+=`<option value="${esc(r.role_name)}" ${r.role_name===selected?'selected':''}>${esc(r.role_name)}</option>`; });
   sel.innerHTML=html;
 }
-function buildNoTargetOptions(selfId, selected){
-  const sel=document.getElementById('f_no_target');
-  let html='', n=0;
-  TSTEPS.forEach(s=>{
-    if(String(s.enabled)==='false') return;
-    n++;
-    if(s.step_id===selfId) return;
-    html+=`<option value="${s.step_id}" ${s.step_id===selected?'selected':''}>Step ${n} — ${esc(s.name)}</option>`;
-  });
-  sel.innerHTML = html || '<option value="">— no other steps —</option>';
-}
-function decisionHint(){
-  const on = document.getElementById('f_isdecision').checked;
-  document.getElementById('f_decision_box').style.display = on?'block':'none';
-  const wantsGoto = document.getElementById('f_no_action').value==='goto';
-  document.getElementById('f_no_target_wrap').style.display = wantsGoto?'block':'none';
-}
 function openStepModal(stepId, insertAfter){
   EDIT_ID=stepId||null; INSERT_AFTER=insertAfter||null;
   const g=id=>document.getElementById(id);
@@ -1177,9 +1226,10 @@ function openStepModal(stepId, insertAfter){
     g('f_pri').value=s.priority||'Medium';
     g('f_color').value=(s.color&&String(s.color).startsWith('#'))?s.color:'#7c5cff';
     g('f_needsdoc').checked=String(s.needs_doc)==='true';
-    g('f_isdecision').checked=String(s.is_decision)==='true';
-    g('f_no_action').value = s.decision_no_action || 'stop';
-    buildNoTargetOptions(stepId, s.decision_no_target||'');
+    g('f_isdec').checked=String(s.is_decision)==='true';
+    g('f_noaction').value=s.no_action||'Stop Order';
+    decToggle();
+    if(s.no_target) g('f_notarget').value=s.no_target;
     if(s.dep_type==='After Step') depSel.value='step::'+s.dep_value;
     else depSel.value=s.dep_type||'After Previous';
     g('f_depv').value = s.dep_type==='After Step'?'':(s.dep_value||'');
@@ -1191,13 +1241,11 @@ function openStepModal(stepId, insertAfter){
     g('f_name').value=''; g('f_desc').value=''; g('f_role').value=''; g('f_dept').value='';
     g('f_est').value=1; g('f_unit').value='Days'; g('f_pri').value='Medium';
     g('f_color').value='#7c5cff'; g('f_needsdoc').checked=false;
-    g('f_isdecision').checked=false; g('f_no_action').value='stop';
-    buildNoTargetOptions(null, '');
+    g('f_isdec').checked=false; g('f_noaction').value='Stop Order'; decToggle();
     depSel.value='After Previous'; g('f_depv').value='';
     const firstEver=TSTEPS.filter(s=>String(s.enabled)!=='false').length===0;
     depSel.disabled=firstEver;
   }
-  decisionHint();
   depHint();
   document.getElementById('stepModal').classList.add('show');
 }
@@ -1216,9 +1264,9 @@ function saveStep(){
     dep_type:dep.dep_type, dep_value:dep.dep_value,
     priority:g('f_pri').value, color:g('f_color').value,
     needs_doc:g('f_needsdoc').checked,
-    is_decision:g('f_isdecision').checked,
-    decision_no_action:g('f_no_action').value,
-    decision_no_target:g('f_isdecision').checked && g('f_no_action').value==='goto' ? g('f_no_target').value : '' };
+    is_decision:g('f_isdec').checked,
+    no_action:g('f_isdec').checked?g('f_noaction').value:'',
+    no_target:(g('f_isdec').checked&&g('f_noaction').value==='Jump to Step')?g('f_notarget').value:'' };
   const req = EDIT_ID
     ? api({action:'updateStep', step_id:EDIT_ID, step:s})
     : api({action:'createStep', wf_id:CURTPL, after_step_id:INSERT_AFTER, step:s});
