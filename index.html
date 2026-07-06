@@ -293,7 +293,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 <div class="blob b1"></div><div class="blob b2"></div>
 <div class="faceLoader" id="faceLoader"><div class="loading-text">SP FMS</div></div>
 
-<!-- ============ AUTH ============ -->
 <div class="authwrap" id="authScreen" style="display:none">
   <div class="auth-aurora"></div>
   <div class="auth-split">
@@ -372,7 +371,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
   </div>
 </div>
 
-<!-- ============ APP ============ -->
 <div id="app" style="display:none">
 <div class="topbar">
   <div class="logo"><div class="dot">SP</div><div><h1>SP FMS</h1><div class="tag">Flow Management System</div></div></div>
@@ -389,7 +387,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <div class="content">
 
-  <!-- ORDERS -->
   <div id="page-orders">
     <div class="cards" id="orderStats"></div>
     <div class="filterrow">
@@ -421,7 +418,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     </div>
   </div>
 
-  <!-- MY TASKS -->
   <div id="page-tasks" style="display:none">
     <div class="box">
       <h4>✅ Steps waiting on you</h4>
@@ -429,7 +425,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     </div>
   </div>
 
-  <!-- TEMPLATE BUILDER -->
   <div id="page-builder" style="display:none">
     <div class="toolrow">
       <select id="tplSelect" onchange="switchTemplate(this.value)" style="flex:1;min-width:200px;padding:12px 14px;border-radius:12px;background:var(--inp);border:1px solid var(--brd);color:var(--txt);font-size:15px;outline:none;font-family:'Jost'"></select>
@@ -440,7 +435,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     <div class="flow" id="flow"></div>
   </div>
 
-  <!-- TEAM -->
   <div id="page-team" style="display:none">
     <div class="box" id="pendingBox" style="display:none">
       <h4>🔔 New Employee Requests</h4>
@@ -481,7 +475,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 </div>
 </div>
 
-<!-- CONFIRM MODAL -->
 <div class="modal" id="modal" style="z-index:10000" onclick="if(event.target===this)closeModal()">
   <div class="modal-card">
     <div class="modal-ic" id="modalIc">⚠️</div>
@@ -491,7 +484,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
   </div>
 </div>
 
-<!-- NEW ORDER MODAL -->
 <div class="modal" id="orderModal" onclick="if(event.target===this)closeOrderModal()">
   <div class="modal-card wide">
     <div class="modal-title" style="margin-bottom:18px">＋ New Order — Purchase Process</div>
@@ -516,7 +508,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
   </div>
 </div>
 
-<!-- GATE ENTRY MODAL -->
 <div class="modal" id="gateModal" onclick="if(event.target===this)closeGateModal()">
   <div class="modal-card wide" style="width:min(520px,100%)">
     <div class="modal-title" style="margin-bottom:6px">🚧 New Gate Entry</div>
@@ -530,7 +521,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
   </div>
 </div>
 
-<!-- ORDER DETAIL MODAL -->
 <div class="modal" id="odModal" onclick="if(event.target===this)closeOd()">
   <div class="modal-card od">
     <div class="od-head">
@@ -538,7 +528,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
       <div class="odSub" id="odSub"></div>
       <div class="od-meta" id="odMeta"></div>
     </div>
-    <div class="od-items" id="odItemsWrap" style="display:none">
+    <div class="od-items" id="odItemsWrap" style="display:block">
       <h5>📦 Items</h5>
       <table class="itable" id="odItems"></table>
     </div>
@@ -557,7 +547,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 </div>
 <input type="file" id="fileInput" style="display:none" onchange="fileChosen(this)">
 
-<!-- STEP MODAL (template) -->
 <div class="modal" id="stepModal" onclick="if(event.target===this)closeStepModal()">
   <div class="modal-card wide">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px">
@@ -627,7 +616,6 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
   </div>
 </div>
 
-<!-- TEMPLATE MODAL -->
 <div class="modal" id="tplModal" onclick="if(event.target===this)closeTplModal()">
   <div class="modal-card wide">
     <div class="modal-title" style="margin-bottom:18px">New Template</div>
@@ -644,7 +632,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbziSaUENG28mak9PpNiwhJFtUR3T1IYBj4sogk5dSAKI0tcHfxDLTS8L-iCGvvqU9la/exec";
+const API = "https://script.google.com/macros/s/AKfycbyGLeN9z39wPwct-1MFnEDpOQd8hDmbt_oDqOGRhfCPQMDp2tUYlAaAjg9AmOa5I8Yd/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -1059,25 +1047,28 @@ function renderOrderDetail(){
 
   const itemsWrap=document.getElementById('odItemsWrap');
   const items = o.items || [];
+  
+  itemsWrap.style.display='block';
   if(items.length){
-    itemsWrap.style.display='block';
     const hl = (ORD_LASTQ||'').toLowerCase();
     document.getElementById('odItems').innerHTML = items.map(it=>{
       const match = hl && String(it.name).toLowerCase().includes(hl);
       return `<tr style="${match?'background:rgba(124,92,255,.14)':''}"><td>${esc(it.name)}${match?' <span class="sc-tag t-role" style="margin-left:6px">match</span>':''}</td><td>${esc(it.qty)} ${esc(it.unit||'')}</td></tr>`;
     }).join('');
-  } else itemsWrap.style.display='none';
+  } else {
+    document.getElementById('odItems').innerHTML = `<tr><td colspan="2" style="color:var(--muted);text-align:center;padding:16px 0">No items found for this order.</td></tr>`;
+  }
 
   document.getElementById('odSteps').innerHTML = steps.map(s=>{
     const locked = s.live==='Locked' || s.live==='Pending';
     const cls = s.live==='Completed'?'done':s.live==='Delayed'?'late':s.live==='Running'?'run':'';
     const mine = can('can_execute_all') || (can('can_execute_assigned') && s.role===ROLE);
     const actionable = mine && !locked && s.live!=='Skipped' && (s.live==='Running'||s.live==='Delayed');
-    const wantsDoc = String(s.needs_doc)==='true';
+    const wantsDoc = String(s.needs_doc).toLowerCase()==='true';
     let act='';
     if(actionable){
       // doc is optional now — attach anytime, complete with Mark Done
-      act = String(s.is_decision)==='true'
+      act = String(s.is_decision).toLowerCase()==='true'
         ? `<button class="btn sm" onclick="decideStep('${s.os_id}','Yes','${CUR_ORDER.order_id}')">✓ Approve</button>
            <button class="btn sm danger" onclick="decideStep('${s.os_id}','No','${CUR_ORDER.order_id}')">✕ Reject</button>`
         : `<button class="btn sm ghost" onclick="pickFile('${s.os_id}')">📎 ${s.doc_url?'Replace':'Attach'}</button>`
@@ -1091,7 +1082,7 @@ function renderOrderDetail(){
     return `<div class="ostep ${locked?'locked':''}">
         <div class="oseq ${cls}">${s.live==='Completed'?'✓':locked?'🔒':s.seq}</div>
         <div class="m">
-          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''}${String(s.is_decision)==='true'?'<span class="sc-tag t-role" style="margin:0 0 0 6px">🔀 Approve / Reject</span>':''}</div>
+          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''}${String(s.is_decision).toLowerCase()==='true'?'<span class="sc-tag t-role" style="margin:0 0 0 6px">🔀 Approve / Reject</span>':''}</div>
           <div class="dd">
             ${s.role?'🛡️ '+esc(s.role)+' · ':''}⏱ ${hrs(s.tat_mins)}
             ${s.done_ts?` · ${s.decision==='Skipped'?'↷ skipped':'✅ '+fmtDT(s.done_ts)+' · '+esc(s.done_by)}`:''}${s.decision&&s.decision!=='Skipped'?` · 🔀 <b>${s.decision==='Yes'?'Approved ✓':s.decision==='No'?'Rejected ✕':esc(s.decision)}</b>`:''}
@@ -1222,7 +1213,7 @@ function deleteTemplate(){
 }
 function depLabel(s){
   if(s.dep_type==='After Step'){
-    const en = TSTEPS.filter(x=>String(x.enabled)!=='false');
+    const en = TSTEPS.filter(x=>String(x.enabled).toLowerCase()!=='false');
     const i = en.findIndex(x=>x.step_id===s.dep_value);
     const ref = TSTEPS.find(x=>x.step_id===s.dep_value);
     return ref ? 'After Step '+(i+1)+' — '+ref.name : 'After Previous';
@@ -1234,7 +1225,7 @@ function renderFlow(){
   if(!TSTEPS.length){ box.innerHTML='<div class="empty"><div class="big">➕</div>Empty canvas. Drop your first step in.</div>'; return; }
   let html='', num=0;
   TSTEPS.forEach((s,i)=>{
-    const off = String(s.enabled)==='false';
+    const off = String(s.enabled).toLowerCase()==='false';
     if(!off) num++;
     html += `
     <div class="stepcard ${off?'off':''}" draggable="true" data-id="${s.step_id}" style="--stepcolor:${esc(s.color)||'var(--accent)'}"
@@ -1250,7 +1241,7 @@ function renderFlow(){
       <div>
         <span class="sc-tag t-dep">🔗 ${esc(depLabel(s))}</span>
         ${s.role?`<span class="sc-tag t-role">🛡️ ${esc(s.role)}</span>`:''}
-        ${String(s.needs_doc)==='true'?'<span class="sc-tag t-doc">📄 Doc slot</span>':''}
+        ${String(s.needs_doc).toLowerCase()==='true'?'<span class="sc-tag t-doc">📄 Doc slot</span>':''}
       </div>
       <div class="sc-acts">
         <button class="icobtn" title="Edit" onclick="openStepModal('${s.step_id}')">✏️</button>
@@ -1292,7 +1283,7 @@ function decToggle(){
   document.getElementById('noTargetWrap').style.display = jump?'block':'none';
   if(jump){
     let html=''; let n=0;
-    TSTEPS.forEach(s=>{ if(String(s.enabled)==='false') return; n++;
+    TSTEPS.forEach(s=>{ if(String(s.enabled).toLowerCase()==='false') return; n++;
       if(s.step_id===EDIT_ID) return;
       html+=`<option value="${s.step_id}">Step ${n} — ${esc(s.name)}</option>`; });
     document.getElementById('f_notarget').innerHTML = html || '<option value="">—</option>';
@@ -1308,9 +1299,9 @@ function condToggle(){
   if(on){
     // only DECISION steps that come before this one can gate it
     let html=''; let n=0;
-    TSTEPS.forEach(s=>{ if(String(s.enabled)==='false') return; n++;
+    TSTEPS.forEach(s=>{ if(String(s.enabled).toLowerCase()==='false') return; n++;
       if(s.step_id===EDIT_ID) return;
-      if(String(s.is_decision)!=='true') return;
+      if(String(s.is_decision).toLowerCase()!=='true') return;
       html+=`<option value="${s.step_id}">Step ${n} — ${esc(s.name)}</option>`; });
     const sel=document.getElementById('f_condon');
     sel.innerHTML = html || '<option value="">— no decision step exists yet —</option>';
@@ -1330,7 +1321,7 @@ function buildDepOptions(selfId){
   let html=['After Previous','Lag After Previous'].map(o=>`<option value="${o}">${o}</option>`).join('');
   let n=0;
   TSTEPS.forEach(s=>{
-    if(String(s.enabled)==='false') return;
+    if(String(s.enabled).toLowerCase()==='false') return;
     n++;
     if(s.step_id===selfId) return;
     html+=`<option value="step::${s.step_id}">After Step ${n} — ${esc(s.name)}</option>`;
@@ -1355,8 +1346,8 @@ function openStepModal(stepId, insertAfter){
     g('f_dept').value=s.department; g('f_est').value=s.est_time; g('f_unit').value=s.time_unit;
     g('f_pri').value=s.priority||'Medium';
     g('f_color').value=(s.color&&String(s.color).startsWith('#'))?s.color:'#7c5cff';
-    g('f_needsdoc').checked=String(s.needs_doc)==='true';
-    g('f_isdec').checked=String(s.is_decision)==='true';
+    g('f_needsdoc').checked=String(s.needs_doc).toLowerCase()==='true';
+    g('f_isdec').checked=String(s.is_decision).toLowerCase()==='true';
     g('f_noaction').value=s.no_action||'Stop Order';
     decToggle();
     if(s.no_target) g('f_notarget').value=s.no_target;
@@ -1364,13 +1355,13 @@ function openStepModal(stepId, insertAfter){
     condToggle();
     if(s.cond_on) g('f_condon').value=s.cond_on;
     g('f_condwhen').value=s.cond_when||'Yes';
-    g('f_gate').checked=String(s.gate_release)==='true';
+    g('f_gate').checked=String(s.gate_release).toLowerCase()==='true';
     g('f_gatewhen').value=s.gate_when||'Any';
     gateToggle();
     if(s.dep_type==='After Step') depSel.value='step::'+s.dep_value;
     else depSel.value=s.dep_type||'After Previous';
     g('f_depv').value = s.dep_type==='After Step'?'':(s.dep_value||'');
-    const en=TSTEPS.filter(x=>String(x.enabled)!=='false');
+    const en=TSTEPS.filter(x=>String(x.enabled).toLowerCase()!=='false');
     if(en.length&&en[0].step_id===stepId){ depSel.value='After Previous'; depSel.disabled=true; }
     else depSel.disabled=false;
   } else {
@@ -1382,7 +1373,7 @@ function openStepModal(stepId, insertAfter){
     g('f_iscond').checked=false; condToggle();
     g('f_gate').checked=false; gateToggle();
     depSel.value='After Previous'; g('f_depv').value='';
-    const firstEver=TSTEPS.filter(s=>String(s.enabled)!=='false').length===0;
+    const firstEver=TSTEPS.filter(s=>String(s.enabled).toLowerCase()!=='false').length===0;
     depSel.disabled=firstEver;
   }
   depHint();
