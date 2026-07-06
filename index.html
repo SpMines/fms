@@ -589,11 +589,11 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
     </div>
     <div class="field" style="margin-bottom:16px">
       <label class="chk"><input type="checkbox" id="f_needsdoc"> 📄 Show a document slot on this step (optional — people can attach a file, not mandatory)</label>
-      <label class="chk" style="margin-top:10px"><input type="checkbox" id="f_isdec" onchange="decToggle()"> 🔀 Decision step — doer chooses Yes / No</label>
+      <label class="chk" style="margin-top:10px"><input type="checkbox" id="f_isdec" onchange="decToggle()"> 🔀 Approval step — the person Approves or Rejects</label>
       <div id="decConfig" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(124,92,255,.06);border:1px dashed rgba(124,92,255,.35);border-radius:12px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">✓ YES → flow normally continues to the next step.<br>✕ NO → what happens?</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">✓ <b>Approve</b> → flow continues to the next step.<br>✕ <b>Reject</b> → what should happen?</div>
         <div class="row2">
-          <div class="field" style="margin-bottom:0"><label>If NO</label>
+          <div class="field" style="margin-bottom:0"><label>If Rejected</label>
             <select id="f_noaction" onchange="decToggle()">
               <option>Stop Order</option>
               <option>Complete Order</option>
@@ -605,19 +605,19 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
       </div>
       <label class="chk" style="margin-top:14px"><input type="checkbox" id="f_iscond" onchange="condToggle()"> 🔗 Conditional — run this step only if an earlier decision went a certain way</label>
       <div id="condConfig" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(70,181,255,.06);border:1px dashed rgba(70,181,255,.35);border-radius:12px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Example: run this only if <b>Step 4</b> was <b>approved (Yes)</b>. If the answer is the opposite, this step is auto-skipped.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Example: run this only if <b>Step 4</b> was <b>Approved</b>. If it was Rejected, this step is auto-skipped.</div>
         <div class="row2">
           <div class="field" style="margin-bottom:0"><label>Run only if step</label>
             <select id="f_condon"></select></div>
           <div class="field" style="margin-bottom:0"><label>was answered</label>
-            <select id="f_condwhen"><option value="Yes">Yes (approved)</option><option value="No">No (rejected)</option></select></div>
+            <select id="f_condwhen"><option value="Yes">Approved</option><option value="No">Rejected</option></select></div>
         </div>
       </div>
       <label class="chk" style="margin-top:14px"><input type="checkbox" id="f_gate" onchange="gateToggle()"> 🚧 Gate release — after this step, the order can be sent to Gate Entry</label>
       <div id="gateConfig" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(255,181,71,.07);border:1px dashed rgba(255,181,71,.35);border-radius:12px">
         <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Order Gate Entry mein tabhi jayega jab ye step complete ho. Agar ye decision step hai, toh sirf is answer pe:</div>
         <div class="field" style="margin-bottom:0"><label>Allow gate if answer</label>
-          <select id="f_gatewhen"><option value="Any">Any (just needs completing)</option><option value="Yes">Yes (approved)</option><option value="No">No (rejected)</option></select></div>
+          <select id="f_gatewhen"><option value="Any">Any (just needs completing)</option><option value="Yes">Approved</option><option value="No">Rejected</option></select></div>
       </div>
     </div>
     <div class="modal-acts">
@@ -644,7 +644,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbw_i1OZvLraXEgt0sMq54nV2qQMEom6LAKrBZyNEIB8mKUtYRKgouS4yQKHijvdU0CE/exec";
+const API = "https://script.google.com/macros/s/AKfycbziSaUENG28mak9PpNiwhJFtUR3T1IYBj4sogk5dSAKI0tcHfxDLTS8L-iCGvvqU9la/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -1078,8 +1078,8 @@ function renderOrderDetail(){
     if(actionable){
       // doc is optional now — attach anytime, complete with Mark Done
       act = String(s.is_decision)==='true'
-        ? `<button class="btn sm" onclick="decideStep('${s.os_id}','Yes','${CUR_ORDER.order_id}')">✓ Yes</button>
-           <button class="btn sm danger" onclick="decideStep('${s.os_id}','No','${CUR_ORDER.order_id}')">✕ No</button>`
+        ? `<button class="btn sm" onclick="decideStep('${s.os_id}','Yes','${CUR_ORDER.order_id}')">✓ Approve</button>
+           <button class="btn sm danger" onclick="decideStep('${s.os_id}','No','${CUR_ORDER.order_id}')">✕ Reject</button>`
         : `<button class="btn sm ghost" onclick="pickFile('${s.os_id}')">📎 ${s.doc_url?'Replace':'Attach'}</button>`
           + `<button class="btn sm" onclick="markDone('${s.os_id}')">✓ Done</button>`;
     } else if(locked){
@@ -1091,10 +1091,10 @@ function renderOrderDetail(){
     return `<div class="ostep ${locked?'locked':''}">
         <div class="oseq ${cls}">${s.live==='Completed'?'✓':locked?'🔒':s.seq}</div>
         <div class="m">
-          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''}</div>
+          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''}${String(s.is_decision)==='true'?'<span class="sc-tag t-role" style="margin:0 0 0 6px">🔀 Approve / Reject</span>':''}</div>
           <div class="dd">
             ${s.role?'🛡️ '+esc(s.role)+' · ':''}⏱ ${hrs(s.tat_mins)}
-            ${s.done_ts?` · ${s.decision==='Skipped'?'↷ skipped':'✅ '+fmtDT(s.done_ts)+' · '+esc(s.done_by)}`:''}${s.decision&&s.decision!=='Skipped'?` · 🔀 chose <b>${esc(s.decision)}</b>`:''}
+            ${s.done_ts?` · ${s.decision==='Skipped'?'↷ skipped':'✅ '+fmtDT(s.done_ts)+' · '+esc(s.done_by)}`:''}${s.decision&&s.decision!=='Skipped'?` · 🔀 <b>${s.decision==='Yes'?'Approved ✓':s.decision==='No'?'Rejected ✕':esc(s.decision)}</b>`:''}
           </div>
           ${showCountdown?`<div class="countdown" data-deadline="${esc(s.deadline_ts)}">${countdownStr(s.deadline_ts)}</div>`:''}
           ${s.doc_url?`<div class="doc">📎 <a href="${esc(s.doc_url)}" target="_blank">${esc(s.doc_name)||'Document'}</a></div>`:''}
@@ -1149,8 +1149,8 @@ function loadTasks(){
     else badge.style.display='none';
     document.getElementById('taskList').innerHTML = d.tasks.length ? d.tasks.map(t=>{
       const acts = t.is_decision
-        ? `<button class="btn sm" onclick="event.stopPropagation();decideStep('${t.os_id}','Yes','${t.order_id}')">✓ Yes</button>
-           <button class="btn sm danger" onclick="event.stopPropagation();decideStep('${t.os_id}','No','${t.order_id}')">✕ No</button>`
+        ? `<button class="btn sm" onclick="event.stopPropagation();decideStep('${t.os_id}','Yes','${t.order_id}')">✓ Approve</button>
+           <button class="btn sm danger" onclick="event.stopPropagation();decideStep('${t.os_id}','No','${t.order_id}')">✕ Reject</button>`
         : `<button class="btn sm ghost" onclick="event.stopPropagation();pickFileTask('${t.os_id}','${t.order_id}')">📎</button>
            <button class="btn sm" onclick="event.stopPropagation();doneFromTask('${t.os_id}','${t.order_id}')">✓ Done</button>`;
       return `<div class="hrow" style="cursor:pointer" onclick="openOrder('${t.order_id}')">
@@ -1171,18 +1171,18 @@ let TASK_ORDER='';
 function pickFileTask(osId, orderId){ TASK_ORDER=orderId; UPLOAD_OS=osId; document.getElementById('fileInput').value=''; document.getElementById('fileInput').click(); }
 function decideStep(osId, choice, orderId){
   const run = ()=> api({action:'completeOrderStep', os_id:osId, choice:choice}).then(d=>{
-    const msg = d.outcome==='stopped' ? 'Order stopped ⛔'
+    const msg = d.outcome==='stopped' ? 'Rejected — order stopped ⛔'
       : d.outcome==='completed' ? 'Order completed — remaining steps skipped 🎉'
-      : String(d.outcome).startsWith('jumped') ? 'Jumped ahead — skipped steps in between ↷'
-      : 'Decision saved ✓ — flow continues';
+      : String(d.outcome).startsWith('jumped') ? 'Jumped ahead — steps in between skipped ↷'
+      : (choice==='Yes'?'Approved ✓ — flow continues':'Saved ✓ — flow continues');
     toast(msg, d.outcome==='stopped'?'err':'ok');
     if(document.getElementById('page-tasks').style.display!=='none') loadTasks();
     if(CUR_ORDER && CUR_ORDER.order_id===orderId) fetchAndRenderOrder(orderId, true);
   });
   if(choice==='No'){
-    modalConfirm({icon:'🔀', title:'Confirm: NO', danger:true,
-      message:'NO chuna toh flow decision ke configured raste pe jayega (stop / skip / complete). Pakka?',
-      confirmText:'Yes, choose NO', onConfirm:run});
+    modalConfirm({icon:'✕', title:'Confirm: Reject', danger:true,
+      message:'Reject karne pe flow configured raste pe jayega (stop / skip / jump). Pakka reject?',
+      confirmText:'Yes, Reject', onConfirm:run});
   } else run();
 }
 
