@@ -590,10 +590,17 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
             <select id="f_notarget"></select></div>
         </div>
       </div>
+      <label class="chk" style="margin-top:14px"><input type="checkbox" id="f_iscond" onchange="condToggle()"> 🔗 Conditional — run this step only if an earlier decision went a certain way</label>
+      <div id="condConfig" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(70,181,255,.06);border:1px dashed rgba(70,181,255,.35);border-radius:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Example: run this only if <b>Step 4</b> was <b>approved (Yes)</b>. If the answer is the opposite, this step is auto-skipped.</div>
+        <div class="row2">
+          <div class="field" style="margin-bottom:0"><label>Run only if step</label>
+            <select id="f_condon"></select></div>
+          <div class="field" style="margin-bottom:0"><label>was answered</label>
+            <select id="f_condwhen"><option value="Yes">Yes (approved)</option><option value="No">No (rejected)</option></select></div>
+        </div>
+      </div>
     </div>
-    <div class="modal-acts">
-      <button class="btn ghost" onclick="closeStepModal()">Cancel</button>
-      <button class="btn" onclick="saveStep()">Save Step</button>
     </div>
   </div>
 </div>
@@ -615,7 +622,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbxCJ5wOMSMImxHYZ4G-tc1e8yjB1Pf39ifgvAaOb3ibAZpBa_rNvVS-o_cf_QqA0toz/exec";
+const API = "https://script.google.com/macros/s/AKfycbyA4JCnBCqdo9gJL6m1cVGP8-d_t71CWTmQ2ZEcIsr3Eyt2nszoVDbCZFJBj4rtJFo/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -1015,7 +1022,7 @@ function renderOrderDetail(){
     const locked = s.live==='Locked' || s.live==='Pending';
     const cls = s.live==='Completed'?'done':s.live==='Delayed'?'late':s.live==='Running'?'run':'';
     const mine = can('can_execute_all') || (can('can_execute_assigned') && s.role===ROLE);
-    const actionable = mine && !locked && (s.live==='Running'||s.live==='Delayed');
+    const actionable = mine && !locked && s.live!=='Skipped' && (s.live==='Running'||s.live==='Delayed');
     const wantsDoc = String(s.needs_doc)==='true';
     let act='';
     if(actionable){
@@ -1241,6 +1248,20 @@ function decToggle(){
     document.getElementById('f_notarget').innerHTML = html || '<option value="">—</option>';
   }
 }
+function condToggle(){
+  const on = document.getElementById('f_iscond').checked;
+  document.getElementById('condConfig').style.display = on?'block':'none';
+  if(on){
+    // only DECISION steps that come before this one can gate it
+    let html=''; let n=0;
+    TSTEPS.forEach(s=>{ if(String(s.enabled)==='false') return; n++;
+      if(s.step_id===EDIT_ID) return;
+      if(String(s.is_decision)!=='true') return;
+      html+=`<option value="${s.step_id}">Step ${n} — ${esc(s.name)}</option>`; });
+    const sel=document.getElementById('f_condon');
+    sel.innerHTML = html || '<option value="">— no decision step exists yet —</option>';
+  }
+}
 function depHint(){
   const v=document.getElementById('f_dep').value;
   const l=document.getElementById('f_depv_lbl');
@@ -1285,6 +1306,10 @@ function openStepModal(stepId, insertAfter){
     g('f_noaction').value=s.no_action||'Stop Order';
     decToggle();
     if(s.no_target) g('f_notarget').value=s.no_target;
+    g('f_iscond').checked=!!s.cond_on;
+    condToggle();
+    if(s.cond_on) g('f_condon').value=s.cond_on;
+    g('f_condwhen').value=s.cond_when||'Yes';
     if(s.dep_type==='After Step') depSel.value='step::'+s.dep_value;
     else depSel.value=s.dep_type||'After Previous';
     g('f_depv').value = s.dep_type==='After Step'?'':(s.dep_value||'');
@@ -1297,6 +1322,7 @@ function openStepModal(stepId, insertAfter){
     g('f_est').value=1; g('f_unit').value='Days'; g('f_pri').value='Medium';
     g('f_color').value='#7c5cff'; g('f_needsdoc').checked=false;
     g('f_isdec').checked=false; g('f_noaction').value='Stop Order'; decToggle();
+    g('f_iscond').checked=false; condToggle();
     depSel.value='After Previous'; g('f_depv').value='';
     const firstEver=TSTEPS.filter(s=>String(s.enabled)!=='false').length===0;
     depSel.disabled=firstEver;
@@ -1321,7 +1347,9 @@ function saveStep(){
     needs_doc:g('f_needsdoc').checked,
     is_decision:g('f_isdec').checked,
     no_action:g('f_isdec').checked?g('f_noaction').value:'',
-    no_target:(g('f_isdec').checked&&g('f_noaction').value==='Jump to Step')?g('f_notarget').value:'' };
+    no_target:(g('f_isdec').checked&&g('f_noaction').value==='Jump to Step')?g('f_notarget').value:'',
+    cond_on:g('f_iscond').checked?g('f_condon').value:'',
+    cond_when:g('f_iscond').checked?g('f_condwhen').value:'Yes' };
   const req = EDIT_ID
     ? api({action:'updateStep', step_id:EDIT_ID, step:s})
     : api({action:'createStep', wf_id:CURTPL, after_step_id:INSERT_AFTER, step:s});
