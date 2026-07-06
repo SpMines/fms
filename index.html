@@ -640,7 +640,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbxaJ45V4gc1B1a3Ylp1ejnK1e2WvbAh_yEaEajhdNnGmctF738AJ_kD_pwLecPpGAhP/exec";
+const API = "https://script.google.com/macros/s/AKfycbyCg8ykWIFazW32YeG8TaQbd19-_j2V1U72weQPo0GzUCxZctgWwY_WJ8iN2ZAegxLL/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -738,7 +738,7 @@ function runDeepLink(){
   if(id){ history.replaceState(null,'','#'); setTimeout(()=>openOrder(id), 300); }
 }
 window.addEventListener('DOMContentLoaded', ()=>{
-  if(SESSION && SESSION.token){ onAuthed(SESSION); loadTplMap().then(loadOrders).then(runDeepLink); }
+  if(SESSION && SESSION.token){ restoreSession().then(ok=>{ if(ok) loadTplMap().then(loadOrders).then(runDeepLink); }); }
   else showAuth('login');
 });
 function showAuth(view){
@@ -840,8 +840,15 @@ function onAuthed(s){
   document.getElementById('app').style.display='block';
   document.getElementById('builderNav').style.display = can('can_build')?'':'none';
   document.getElementById('teamNav').style.display = can('can_manage_team')?'':'none';
-  // role/perm info may be stale on restore — refresh silently
-  if(!s.perms) rawApi({action:'login'}); 
+}
+/** On refresh SESSION has only {name,email,token}. Re-verify to get role/perms. */
+function restoreSession(){
+  return rawApi({action:'whoami', user:SESSION.email, token:SESSION.token}).then(d=>{
+    if(!d.ok || !d.data || !d.data.role){ logout(true); return false; }
+    ROLE=d.data.role; PERMS=d.data.perms||{}; ROLES=d.data.roles||[];
+    onAuthed({name:SESSION.name, role:ROLE, perms:PERMS, roles:ROLES});
+    return true;
+  }).catch(()=>{ logout(true); return false; });
 }
 function logoutConfirm(){
   modalConfirm({icon:'⏻', title:'Sign out?', message:'', confirmText:'Sign Out', onConfirm:()=>logout(false)});
