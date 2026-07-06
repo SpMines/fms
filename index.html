@@ -81,10 +81,10 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 @media(min-width:1400px){ .content{padding:24px 48px 100px} }
 @media(max-width:900px){ .content{padding:16px 14px 90px} }
 
-.authwrap{position:relative;z-index:1;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+.authwrap{position:relative;z-index:1;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
 
 /* ===== SPLIT LOGIN (Ikxari style) ===== */
-.auth-split{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 1fr;width:min(940px,100%);border-radius:26px;overflow:hidden;border:1px solid var(--brd);box-shadow:0 34px 90px rgba(0,0,0,.6);animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
+.auth-split{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 1fr;width:min(940px,100%);margin:auto;border-radius:26px;overflow:hidden;border:1px solid var(--brd);box-shadow:0 34px 90px rgba(0,0,0,.6);animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
 .auth-left{background:linear-gradient(160deg,rgba(124,92,255,.16),rgba(13,13,24,.7) 55%),rgba(13,13,24,.6);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);padding:42px 38px;display:flex;flex-direction:column}
 .al-brand{margin-bottom:26px}
 .al-head{font-size:27px;font-weight:800;line-height:1.25;letter-spacing:-.4px;margin-bottom:10px}
@@ -118,7 +118,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 .authcard{position:relative;z-index:1;animation:cardIn .7s cubic-bezier(.16,1,.3,1)}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
 .auth-brand{text-align:center;margin-bottom:20px}
-.dot.big{width:60px;height:60px;border-radius:18px;font-size:22px;margin:0 auto 14px;box-shadow:0 12px 40px rgba(124,92,255,.6);animation:floaty 4s ease-in-out infinite}
+.dot.big{width:60px;height:60px;border-radius:18px;font-size:22px;margin:0 auto 14px;box-shadow:0 12px 40px rgba(124,92,255,.6)}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .auth-name{font-size:26px;font-weight:800;letter-spacing:-.5px}
 .auth-tag{font-size:13px;color:var(--muted);margin-top:2px}
@@ -390,13 +390,14 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
   <div id="page-orders">
     <div class="cards" id="orderStats"></div>
     <div class="filterrow">
-      <span class="lbl">🧩 Template</span>
-      <select id="f_wf" onchange="ORD_PAGE=1;loadOrders()"><option value="">All templates</option></select>
+      <span class="lbl">Status</span>
+      <select id="f_wf" style="display:none"></select>
       <span class="lbl">From</span>
       <input type="date" id="f_from" onchange="ORD_PAGE=1;loadOrders()">
       <span class="lbl">To</span>
       <input type="date" id="f_to" onchange="ORD_PAGE=1;loadOrders()">
-      <button class="btn sm ghost" onclick="clearFilters()">✕ Clear filters</button>
+      <button class="btn sm ghost" onclick="clearFilters()">✕ Clear</button>
+      <button class="btn sm ghost" onclick="exportReport()">📥 Export CSV</button>
     </div>
     <div class="toolrow">
       <input type="search" id="oq" placeholder="Search orders, people, items…" onkeydown="if(event.key==='Enter')searchOrders()">
@@ -478,7 +479,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 </div>
 
 <!-- CONFIRM MODAL -->
-<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+<div class="modal" id="modal" style="z-index:10000" onclick="if(event.target===this)closeModal()">
   <div class="modal-card">
     <div class="modal-ic" id="modalIc">⚠️</div>
     <div class="modal-title" id="modalTitle"></div>
@@ -614,7 +615,7 @@ body{background:var(--bg);color:var(--txt);min-height:100dvh}
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbz9Q9FXd7u6S8kLyybELOykWNrwEJU2sp7cMQ4_xg1lnjDUs5b0qP4ZBzbjq2OzfNoH/exec";
+const API = "https://script.google.com/macros/s/AKfycbxCJ5wOMSMImxHYZ4G-tc1e8yjB1Pf39ifgvAaOb3ibAZpBa_rNvVS-o_cf_QqA0toz/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -831,6 +832,24 @@ function go(p){
 }
 
 /* ================= ORDERS LIST ================= */
+function exportReport(){
+  api({action:'listOrders', q:document.getElementById('oq').value.trim(), status:ORD_STATUS,
+    page:1, wf_id:(TPL_MAP[ORD_KIND]||''), from:document.getElementById('f_from').value,
+    to:document.getElementById('f_to').value, all:true}).then(d=>{
+    const rows=d.orders||[];
+    if(!rows.length) return toast('Nothing to export','err');
+    const head=['Order ID','Receiver','Required For','Items Done','Total Steps','Status','Current Step','Created','Linked'];
+    const esc2=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+    const lines=[head.map(esc2).join(',')];
+    rows.forEach(o=>lines.push([o.order_id,o.receiver||o.title,o.required_person||'',o.done,o.total,o.status,o.current,o.created_at,o.linked_order||''].map(esc2).join(',')));
+    const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=(ORD_KIND==='gate'?'GateEntries':'Orders')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+    toast('Report downloaded ('+rows.length+' rows) 📥','ok');
+  });
+}
 function searchOrders(){ ORD_PAGE=1; ORD_LASTQ=document.getElementById('oq').value.trim(); loadOrders(); }
 function setOrdStatus(s){ ORD_STATUS=s; ORD_PAGE=1; loadOrders(); }
 function clearFilters(){
@@ -844,13 +863,13 @@ function fillFilterTemplates(){
   api({action:'listTemplates'}).then(list=>{
     const sel=document.getElementById('f_wf');
     const cur=sel.value;
-    sel.innerHTML='<option value="">All templates</option>'+list.map(t=>`<option value="${t.wf_id}">${esc(t.name)}</option>`).join('');
+    // template dropdown retired — flows are fixed
     sel.value=cur;
   }).catch(()=>{});
 }
 function loadOrders(){
   api({action:'listOrders', q:document.getElementById('oq').value.trim(), status:ORD_STATUS, page:ORD_PAGE,
-    wf_id:document.getElementById('f_wf').value, from:document.getElementById('f_from').value, to:document.getElementById('f_to').value})
+    wf_id:(TPL_MAP[ORD_KIND]||''), from:document.getElementById('f_from').value, to:document.getElementById('f_to').value})
   .then(d=>{
     const c=d.counts;
     const stat=(label,n,key,color)=>`<div class="stat ${ORD_STATUS===key?'on':''}" onclick="setOrdStatus('${key}')">
@@ -873,7 +892,7 @@ function loadOrders(){
         <td><span class="badge bg-${esc(o.status)}">${esc(o.status)}</span></td>
         <td class="hidem osub">${fmtDT(o.created_at)}</td>
       </tr>`;
-    }).join('') : `<tr><td colspan="7"><div class="empty"><div class="big">📦</div>Nothing here yet. Spin up your first order.</div></td></tr>`;
+    }).join('') : `<tr><td colspan="7"><div class="empty"><div class="big">${ORD_KIND==='gate'?'🚧':'📦'}</div>${ORD_KIND==='gate'?'No gate entries yet. Hit ＋ New Gate Entry and enter a purchase order ID.':'Nothing here yet. Spin up your first order.'}</div></td></tr>`;
 
     document.getElementById('pager').innerHTML = d.pages>1 ?
       `<button class="btn sm ghost" ${d.page<=1?'disabled':''} onclick="ORD_PAGE--;loadOrders()">← Prev</button>
