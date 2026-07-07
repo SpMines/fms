@@ -140,12 +140,13 @@ body {
 }
 
 #odModal .modal-card {
-  width: 80vw;
-  max-width: 1000px;
+  width: 90vw;
+  max-width: 1100px;
 }
 
 .modal-card.od {
-  width: min(760px, 100%);
+  width: 90vw;
+  max-width: 1100px;
   text-align: left;
   max-height: 92dvh;
   overflow-y: auto;
@@ -153,6 +154,91 @@ body {
   border-radius: 20px;
   box-shadow: 0 30px 80px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.15);
 }
+
+/* ===== FRAMED STEP CARDS (screenshot style) ===== */
+.fcard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: var(--fcbg, rgba(255,255,255,.03));
+  border: 1px solid var(--fcbr, var(--brd));
+  border-left: 4px solid var(--fc, var(--accent));
+  animation: rowIn .3s ease both;
+}
+.fcard.skip { opacity: .72; }
+.fc-ic {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--fcbg, rgba(255,255,255,.05));
+  border: 1px solid var(--fcbr, var(--brd));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.fc-main { flex: 1; min-width: 0; }
+.fc-name { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; }
+.fc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.fc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 9px;
+}
+.fc-chip {
+  font-size: 11.5px;
+  padding: 4px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--brd);
+  background: rgba(255,255,255,.04);
+  color: var(--muted);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.fc-chip.doc { color: #ffc875; border-color: rgba(255,181,71,.35); background: rgba(255,181,71,.08); }
+.fc-chip.ok, .fc-chip.fin { color: #7fe9c0; border-color: rgba(55,211,153,.4); background: rgba(55,211,153,.1); }
+.fc-chip.bad { color: #ff97a2; border-color: rgba(255,93,108,.4); background: rgba(255,93,108,.1); }
+.fc-chip.skip { color: #ff8a5c; border-color: rgba(255,138,92,.4); background: rgba(255,138,92,.1); }
+.fc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.fc-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 9px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.fc-acts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.fc-acts .btn { width: auto; white-space: nowrap; }
+@media(max-width:640px) {
+  .fcard { flex-wrap: wrap; }
+  .fc-right { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+}
+
 
 .modal-ic {
   font-size: 34px;
@@ -1675,6 +1761,7 @@ body {
       <input type="date" id="f_to" onchange="ORD_PAGE=1;loadOrders()">
       <button class="btn sm ghost" onclick="clearFilters()">✕ Clear</button>
       <button class="btn sm ghost" onclick="exportReport()">📥 Export CSV</button>
+      <button class="btn sm ghost" onclick="fullReport()">📊 Full Report</button>
     </div>
     <div class="toolrow">
       <input type="search" id="oq" placeholder="Search orders, people, items…" onkeydown="if(event.key==='Enter')searchOrders()">
@@ -1934,7 +2021,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbxK1F6R4TprD4VuTdp2r83Nt4t_cbR1kfvEBsZXy2OqwbC3nfJVxeFVWDbs5iF5YeUh/exec";
+const API = "https://script.google.com/macros/s/AKfycbypGtjkXBVVY91bzefwqqcy3XS3e2L3UgWoIh9LiboN9AVsp1ECI12eOBl2DcnHhfyu/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2245,6 +2332,81 @@ function go(p){
 }
 
 /* ================= ORDERS LIST ================= */
+function fullReport(){
+  api({
+    action:'listOrders',
+    q:document.getElementById('oq').value.trim(),
+    status:ORD_STATUS,
+    page:1,
+    wf_id:(TPL_MAP[ORD_KIND]||''),
+    from:document.getElementById('f_from').value,
+    to:document.getElementById('f_to').value,
+    all:true
+  }).then(d=>{
+    const rows=d.orders||[];
+    if(!rows.length) return toast('Nothing to report','err');
+    const c=d.counts||{};
+    const kind = ORD_KIND==='gate'?'Gate Entries':'Purchase Orders';
+    const now = new Date().toLocaleString('en-IN');
+    const badge=st=>{
+      const col={Completed:'#16a34a',Running:'#6C5CE7',Delayed:'#e0405a',Stopped:'#d97706'}[st]||'#6b7280';
+      return `<span style="color:#fff;background:${col};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">${st}</span>`;
+    };
+    const trs = rows.map((o,i)=>`<tr style="${i%2?'background:#faf9ff':''}">
+      <td style="font-weight:700;color:#6C5CE7">${esc(o.order_id)}</td>
+      <td>${esc(o.receiver||o.title)}</td>
+      <td>${esc(o.required_person||'—')}</td>
+      <td style="text-align:center">${o.done}/${o.total}</td>
+      <td style="text-align:center">${badge(esc(o.status))}</td>
+      <td>${esc(o.current)}</td>
+      <td style="white-space:nowrap;font-size:12px">${fmtDT(o.created_at)}</td>
+      <td>${esc(o.linked_order||'—')}</td>
+    </tr>`).join('');
+
+    const kpi=(n,l,col)=>`<div style="flex:1;min-width:120px;background:#fff;border:1px solid #ece9ff;border-left:4px solid ${col};border-radius:12px;padding:14px 16px">
+      <div style="font-size:26px;font-weight:800;color:#1a1d27">${n}</div>
+      <div style="font-size:12px;color:#6b7280;margin-top:2px">${l}</div></div>`;
+
+    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>SP FMS Report — ${kind}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box;font-family:'Jost',sans-serif}
+      body{background:#f6f5ff;color:#1a1d27;padding:32px}
+      .wrap{max-width:1100px;margin:0 auto}
+      .hd{background:linear-gradient(135deg,#6C5CE7,#a29bfe);border-radius:18px;padding:28px 30px;color:#fff;margin-bottom:20px}
+      .hd h1{font-size:26px;font-weight:800}
+      .hd p{opacity:.9;font-size:14px;margin-top:4px}
+      .kpis{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+      table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+      th{background:#1a1d27;color:#fff;text-align:left;padding:11px 12px;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+      td{padding:10px 12px;border-bottom:1px solid #f0eefc;font-size:13.5px}
+      .ft{text-align:center;color:#9aa0b4;font-size:12px;margin-top:20px}
+      .noprint{text-align:center;margin-bottom:18px}
+      .noprint button{background:#6C5CE7;color:#fff;border:none;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Jost'}
+      @media print{.noprint{display:none}body{background:#fff;padding:0}}
+    </style></head><body><div class="wrap">
+      <div class="noprint"><button onclick="window.print()">🖨️ Print / Save as PDF</button></div>
+      <div class="hd"><h1>SP FMS — ${kind} Report</h1><p>Generated ${now} · ${rows.length} record(s)${document.getElementById('f_from').value?' · from '+document.getElementById('f_from').value:''}${document.getElementById('f_to').value?' to '+document.getElementById('f_to').value:''}</p></div>
+      <div class="kpis">
+        ${kpi(c.all||rows.length,'Total','#6C5CE7')}
+        ${kpi(c.running||0,'Running','#6C5CE7')}
+        ${kpi(c.delayed||0,'Delayed','#e0405a')}
+        ${kpi(c.completed||0,'Completed','#16a34a')}
+        ${kpi(c.stopped||0,'Stopped','#d97706')}
+      </div>
+      <table><thead><tr>
+        <th>Order ID</th><th>Receiver</th><th>Required For</th><th>Progress</th><th>Status</th><th>Current Step</th><th>Created</th><th>Linked</th>
+      </tr></thead><tbody>${trs}</tbody></table>
+      <div class="ft">Built by Somnath Karmakar · SP FMS</div>
+    </div></body></html>`;
+
+    const w=window.open('','_blank');
+    if(!w){ toast('Allow pop-ups to view the report','err'); return; }
+    w.document.write(html); w.document.close();
+    toast('Report opened in new tab 📊','ok');
+  });
+}
+
 function exportReport(){
   api({
     action:'listOrders', 
@@ -2523,47 +2685,94 @@ function renderOrderDetail(){
     document.getElementById('odItems').innerHTML = `<tr><td colspan="2" style="color:var(--muted);text-align:center;padding:16px 0">No items found for this order.</td></tr>`;
   }
 
-  let skippedAny = false;
+  // status → color theme for the framed cards
+  const THEME = {
+    Completed:{c:'#37d399',bg:'rgba(55,211,153,.09)',br:'rgba(55,211,153,.55)'},
+    Running:  {c:'#a29bfe',bg:'rgba(108,92,231,.09)',br:'rgba(108,92,231,.55)'},
+    Delayed:  {c:'#ff97a2',bg:'rgba(255,93,108,.09)',br:'rgba(255,93,108,.6)'},
+    Locked:   {c:'#c2c7d6',bg:'rgba(154,160,180,.06)',br:'rgba(154,160,180,.35)'},
+    Skipped:  {c:'#ff8a5c',bg:'rgba(255,138,92,.08)',br:'rgba(255,138,92,.5)'}
+  };
+  const ICON = {doc:'📄',decision:'🔀',gate:'🚧',final:'🏁',plain:'📋'};
+
+  // is the whole order finished? (a final step done, or nothing left running)
+  const orderDone = String(o.status)==='Completed';
+  let hideRest = false;   // once we pass the completing step, hide the tail
+
   document.getElementById('odSteps').innerHTML = steps.map(s=>{
-    if(s.live === 'Skipped') { skippedAny = true; return ''; }
-    
-    const locked = s.live==='Locked' || s.live==='Pending';
-    const cls = s.live==='Completed'?'done':s.live==='Delayed'?'late':s.live==='Running'?'run':'';
-    const mine = can('can_execute_all') || (can('can_execute_assigned') && s.role===ROLE);
-    const actionable = mine && !locked && s.live!=='Skipped' && (s.live==='Running'||s.live==='Delayed');
+    const isSkip = (s.live==='Skipped' || s.decision==='Skipped');
+    const isFinal = String(s.is_final).toLowerCase()==='true';
+    const isDec = String(s.is_decision).toLowerCase()==='true';
     const wantsDoc = String(s.needs_doc).toLowerCase()==='true';
+
+    // HIDE steps that come after the order is already complete
+    if(hideRest && !s.done_ts) return '';
+    if(orderDone && isFinal && s.done_ts) hideRest = true;   // final done → hide tail
+    // also hide skipped tail once order completed via final/complete-order
+    if(orderDone && isSkip) return '';
+
+    const th = THEME[isSkip?'Skipped':(s.live in THEME ? s.live : 'Locked')];
+    const locked = s.live==='Locked' || s.live==='Pending';
+    const mine = can('can_execute_all') || (can('can_execute_assigned') && s.role===ROLE);
+    const actionable = mine && !locked && !isSkip && (s.live==='Running'||s.live==='Delayed');
+
+    // status pill label
+    let pill = s.live, pillTxt = s.live;
+    if(isSkip){ pill='Skipped'; pillTxt='Skipped'; }
+    else if(isDec && s.decision==='Yes'){ pill='Completed'; pillTxt='Approved'; }
+    else if(isDec && s.done_ts && !isSkip){ pill='Completed'; pillTxt='Completed'; }
+    else if(s.live==='Completed'){ pillTxt='Completed'; }
+
+    // left icon
+    const ico = isSkip?'⏭️':(isDec?ICON.decision:(isFinal?ICON.final:(wantsDoc?ICON.doc:ICON.plain)));
+
+    // action buttons
     let act='';
-    
     if(actionable){
-      act = String(s.is_decision).toLowerCase()==='true'
-        ? `<button class="btn sm" onclick="decideStep('${s.os_id}','Yes','${CUR_ORDER.order_id}')">✓ Approve</button>
-           <button class="btn sm danger" onclick="decideStep('${s.os_id}','No','${CUR_ORDER.order_id}')">✕ Reject</button>`
-        : `<button class="btn sm ghost" onclick="pickFile('${s.os_id}')">📎 ${s.doc_url?'Replace':'Attach'}</button>`
-          + `<button class="btn sm" onclick="markDone('${s.os_id}')">✓ Done</button>`;
-    } else if(locked){
-      act = `<span class="osub">🔒 Locked</span>`;
-    } else if((s.live==='Running'||s.live==='Delayed') && !mine){
-      act = `<span class="osub">${esc(s.role)||'—'}</span>`;
+      act = isDec
+        ? `<button class="btn sm" onclick="decideStep('${s.os_id}','Yes','${o.order_id}')">✓ Approve</button>
+           <button class="btn sm danger" onclick="decideStep('${s.os_id}','No','${o.order_id}')">✕ Reject</button>`
+        : `<button class="btn sm ghost" onclick="pickFile('${s.os_id}')">📎 ${s.doc_url?'Replace':'Attach'}</button>
+           <button class="btn sm" onclick="markDone('${s.os_id}')">✓ Done</button>`;
     }
-    
+
+    // meta line 2 (doer · time · date)
+    const doer = s.role ? esc(s.role) : '—';
+    const dt = s.done_ts ? fmtDT(s.done_ts) : (s.deadline_ts?fmtDT(s.deadline_ts):'');
+
+    // sub chips (doc / decision-result / final / skipped)
+    let chips='';
+    if(wantsDoc){
+      chips += s.doc_url
+        ? `<a class="fc-chip doc" href="${esc(s.doc_url)}" target="_blank">📄 ${esc(s.doc_name)||'Document'}</a>`
+        : `<span class="fc-chip doc">📄 Document</span>`;
+    }
+    if(isDec && s.decision && s.decision!=='Skipped')
+      chips += `<span class="fc-chip ${s.decision==='Yes'?'ok':'bad'}">${s.decision==='Yes'?'✅ Approved':'⛔ Rejected'}</span>`;
+    if(isFinal) chips += `<span class="fc-chip fin">🏁 Final Step</span>`;
+    if(isSkip) chips += `<span class="fc-chip skip">⏭️ Step skipped</span>`;
+
     const showCountdown = (s.live==='Running'||s.live==='Delayed');
-    return `<div class="ostep ${locked?'locked':''}">
-        <div class="oseq ${cls}">${s.live==='Completed'?'✓':locked?'🔒':s.seq}</div>
-        <div class="m">
-          <div class="nm">${esc(s.name)} ${wantsDoc?'<span class="sc-tag t-doc" style="margin:0 0 0 6px">📄 doc</span>':''}${String(s.is_decision).toLowerCase()==='true'?'<span class="sc-tag t-role" style="margin:0 0 0 6px">🔀 Approve / Reject</span>':''}${String(s.is_final).toLowerCase()==='true'?'<span class="sc-tag" style="background:rgba(55,211,153,.15);border:1px solid rgba(55,211,153,.4);color:#7fe9c0;margin:0 0 0 6px">🏁 Final Step</span>':''}</div>
-          <div class="dd">
-            ${s.role?'🛡️ '+esc(s.role)+' · ':''}⏱ ${hrs(s.tat_mins)}
-            ${s.done_ts?` · ✅ ${fmtDT(s.done_ts)} · ${esc(s.done_by)}`:''}${s.decision?` · 🔀 <b>${s.decision==='Yes'?'Approved ✓':s.decision==='No'?'Rejected ✕':esc(s.decision)}</b>`:''}
-          </div>
-          ${showCountdown?`<div class="countdown" data-deadline="${esc(s.deadline_ts)}">${countdownStr(s.deadline_ts)}</div>`:''}
-          ${s.doc_url?`<div class="doc">📎 <a href="${esc(s.doc_url)}" target="_blank">${esc(s.doc_name)||'Document'}</a></div>`:''}
+
+    return `<div class="fcard ${isSkip?'skip':''}" style="--fc:${th.c};--fcbg:${th.bg};--fcbr:${th.br}">
+      <div class="fc-ic">${ico}</div>
+      <div class="fc-main">
+        <div class="fc-name">${esc(s.name)}</div>
+        <div class="fc-meta">
+          <span>👤 ${doer}</span>
+          <span>⏱ ${hrs(s.tat_mins)}</span>
+          ${dt?`<span>📅 ${dt}</span>`:''}
+          ${s.done_by?`<span>· ${esc(s.done_by)}</span>`:''}
         </div>
-        <div class="acts">
-          <span class="badge bg-${s.live}">${locked?'Locked':s.live}</span>
-          ${act}
-        </div>
-      </div>`;
-  }).join('') + (skippedAny ? '<div class="skipped-badge">🏁 Order Completed — Remaining steps were auto-skipped</div>' : '');
+        ${chips?`<div class="fc-chips">${chips}</div>`:''}
+        ${showCountdown?`<div class="countdown" data-deadline="${esc(s.deadline_ts)}">${countdownStr(s.deadline_ts)}</div>`:''}
+      </div>
+      <div class="fc-right">
+        <span class="fc-pill" style="color:${th.c};background:${th.bg};border-color:${th.br}">${pillTxt}</span>
+        ${act?`<div class="fc-acts">${act}</div>`:''}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('') + (orderDone ? '<div class="skipped-badge">🏁 Order Completed — remaining steps hidden</div>' : '');
 }
 
 function closeOd(){
