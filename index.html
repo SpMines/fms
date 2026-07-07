@@ -1751,7 +1751,7 @@ body {
     </div>
   </div>
 
-  <div class="credit">Built by <b>Somnath Karmakar</b> · <span style="color:#a29bfe">v3.7</span></div>
+  <div class="credit">Built by <b>Somnath Karmakar</b> · <span style="color:#a29bfe">v3.8</span></div>
 </div>
 </div>
 
@@ -1866,15 +1866,25 @@ body {
       
       <label class="chk" style="margin-top:14px"><input type="checkbox" id="f_isdec" onchange="decToggle()"> 🔀 Approval step — the person Approves or Rejects</label>
       <div id="decConfig" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(108,92,231,.06);border:1px dashed rgba(108,92,231,.35);border-radius:12px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">✓ <b>Approve</b> → flow continues to the next step.<br>✕ <b>Reject</b> → what should happen?</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Set what happens on each choice:</div>
         <div class="row2">
-          <div class="field" style="margin-bottom:0"><label>If Rejected</label>
+          <div class="field" style="margin-bottom:0"><label>✓ If Approved</label>
+            <select id="f_yesaction" onchange="decToggle()">
+              <option>Next</option>
+              <option>Complete Order</option>
+              <option>Jump to Step</option>
+            </select></div>
+          <div class="field" id="yesTargetWrap" style="margin-bottom:0;display:none"><label>Approve → Jump to</label>
+            <select id="f_yestarget"></select></div>
+        </div>
+        <div class="row2" style="margin-top:10px">
+          <div class="field" style="margin-bottom:0"><label>✕ If Rejected</label>
             <select id="f_noaction" onchange="decToggle()">
               <option>Stop Order</option>
               <option>Complete Order</option>
               <option>Jump to Step</option>
             </select></div>
-          <div class="field" id="noTargetWrap" style="margin-bottom:0;display:none"><label>Jump to</label>
+          <div class="field" id="noTargetWrap" style="margin-bottom:0;display:none"><label>Reject → Jump to</label>
             <select id="f_notarget"></select></div>
         </div>
       </div>
@@ -1924,7 +1934,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbxyJItkqOaWZCtRWwPWdJ5f8b1xNpZBr3mO8nPkCv2k5UVe0PbE68CEjTChIrB-kFCQ/exec";
+const API = "https://script.google.com/macros/s/AKfycbxK1F6R4TprD4VuTdp2r83Nt4t_cbR1kfvEBsZXy2OqwbC3nfJVxeFVWDbs5iF5YeUh/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2837,18 +2847,32 @@ function dropCard(e){
 function decToggle(){
   const on = document.getElementById('f_isdec').checked;
   document.getElementById('decConfig').style.display = on?'block':'none';
-  const jump = document.getElementById('f_noaction').value==='Jump to Step';
-  document.getElementById('noTargetWrap').style.display = jump?'block':'none';
-  
-  if(jump){
+
+  function stepOpts(){
     let html=''; let n=0;
-    TSTEPS.forEach(s=>{ 
-      if(String(s.enabled).toLowerCase()==='false') return; 
+    TSTEPS.forEach(s=>{
+      if(String(s.enabled).toLowerCase()==='false') return;
       n++;
       if(s.step_id===EDIT_ID) return;
-      html+=`<option value="${s.step_id}">Step ${n} — ${esc(s.name)}</option>`; 
+      html+=`<option value="${s.step_id}">Step ${n} — ${esc(s.name)}</option>`;
     });
-    document.getElementById('f_notarget').innerHTML = html || '<option value="">—</option>';
+    return html || '<option value="">—</option>';
+  }
+
+  const noJump = document.getElementById('f_noaction').value==='Jump to Step';
+  document.getElementById('noTargetWrap').style.display = noJump?'block':'none';
+  if(noJump){
+    const cur=document.getElementById('f_notarget').value;
+    document.getElementById('f_notarget').innerHTML = stepOpts();
+    if(cur) document.getElementById('f_notarget').value=cur;
+  }
+
+  const yesJump = document.getElementById('f_yesaction').value==='Jump to Step';
+  document.getElementById('yesTargetWrap').style.display = yesJump?'block':'none';
+  if(yesJump){
+    const cur=document.getElementById('f_yestarget').value;
+    document.getElementById('f_yestarget').innerHTML = stepOpts();
+    if(cur) document.getElementById('f_yestarget').value=cur;
   }
 }
 
@@ -2941,9 +2965,11 @@ function openStepModal(stepId, insertAfter){
     g('f_needsdoc').checked=String(s.needs_doc).toLowerCase()==='true';
     g('f_isdec').checked=String(s.is_decision).toLowerCase()==='true';
     g('f_noaction').value=s.no_action||'Stop Order';
+    g('f_yesaction').value=s.yes_action||'Next';
     decToggle();
-    
     if(s.no_target) g('f_notarget').value=s.no_target;
+    if(s.yes_target) g('f_yestarget').value=s.yes_target;
+    decToggle();
     g('f_iscond').checked=!!s.cond_on;
     condToggle();
     
@@ -2975,6 +3001,7 @@ function openStepModal(stepId, insertAfter){
     g('f_needsdoc').checked=false;
     g('f_isdec').checked=false; 
     g('f_noaction').value='Stop Order'; 
+    g('f_yesaction').value='Next';
     decToggle();
     g('f_iscond').checked=false; 
     condToggle();
@@ -3021,6 +3048,8 @@ function saveStep(){
     is_decision:g('f_isdec').checked,
     no_action:g('f_isdec').checked?g('f_noaction').value:'',
     no_target:(g('f_isdec').checked&&g('f_noaction').value==='Jump to Step')?g('f_notarget').value:'',
+    yes_action:g('f_isdec').checked?g('f_yesaction').value:'Next',
+    yes_target:(g('f_isdec').checked&&g('f_yesaction').value==='Jump to Step')?g('f_yestarget').value:'',
     cond_on:g('f_iscond').checked?g('f_condon').value:'',
     cond_when:g('f_iscond').checked?g('f_condwhen').value:'Yes',
     gate_release:g('f_gate').checked,
