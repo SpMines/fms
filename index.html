@@ -1871,7 +1871,7 @@ body {
 
     <div class="modal-acts">
       <button class="btn ghost" onclick="closeOrderModal()">Cancel</button>
-      <button class="btn" id="createOrderBtn" onclick="createOrder()">Create — Clock Starts Now ▶</button>
+      <button class="btn" onclick="createOrder()">Create — Clock Starts Now ▶</button>
     </div>
   </div>
 </div>
@@ -2020,7 +2020,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbwVhmevac6BQ7FPt9lW8ikFZCUIgaZgU0LXhwghDf2IF86LkV9evZ2zF_ZH-QRuznhz/exec";
+const API = "https://script.google.com/macros/s/AKfycbyg0iaHBATDcP0KtlWgOhLmTDrHdt4SDAl8uJikdXtNgWRIKq2STITLqEjvQzmkPQz3/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2029,22 +2029,8 @@ function hideLoader(){_busy=Math.max(0,_busy-1);if(_busy===0)document.getElement
 function rawApi(p){
   showLoader();
   return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)})
-    .then(r=>r.text())
-    .then(txt=>{
-      try { return JSON.parse(txt); }
-      catch(e){
-        // v3.10: under rapid/overlapping requests Google sometimes serves an
-        // HTML error page instead of JSON — the action usually still ran
-        // server-side, the reply just got lost. Say that plainly instead of
-        // dumping the raw "<!DOCTYPE..." parse error.
-        e.__spfmsMsg = /^\s*<(!doctype|html)/i.test(txt)
-          ? 'Server busy for a sec — check the list, your last action likely still went through'
-          : 'Bad response from server — try again';
-        throw e;
-      }
-    })
-    .then(d=>{hideLoader();return d;})
-    .catch(e=>{hideLoader();toast(e.__spfmsMsg||'Network error — check internet / GAS access','err');throw e;});
+    .then(r=>r.json()).then(d=>{hideLoader();return d;})
+    .catch(e=>{hideLoader();toast('Network error — check internet / GAS access','err');throw e;});
 }
 function apiSilent(p){
   if(SESSION){ p.user = SESSION.email; p.token = SESSION.token; }
@@ -2612,9 +2598,7 @@ function closeOrderModal(){
   document.getElementById('orderModal').classList.remove('show'); 
 }
 
-let _creatingOrder=false;   // v3.10: guard against double-submit
 function createOrder(){
-  if(_creatingOrder) return;   // already submitting — ignore extra clicks
   const receiver=document.getElementById('no_receiver').value.trim();
   const reqperson=document.getElementById('no_reqperson').value.trim();
   const items=collectItems();
@@ -2622,10 +2606,6 @@ function createOrder(){
   if(!receiver) return toast('Receiver name required','err');
   if(!reqperson) return toast('Required person required','err');
   if(!items.length) return toast('Add at least one item with quantity','err');
-  
-  _creatingOrder=true;
-  const btn=document.getElementById('createOrderBtn');
-  if(btn){ btn.disabled=true; btn.textContent='Creating…'; }
   
   api({
     action:'createOrder', 
@@ -2640,10 +2620,6 @@ function createOrder(){
     closeOrderModal(); 
     loadOrders(); 
     toast(d.order_id+' is live — Step 1 done, clock\'s ticking on Step 2 ⏱','ok'); 
-  })
-  .finally(()=>{
-    _creatingOrder=false;
-    if(btn){ btn.disabled=false; btn.textContent='Create — Clock Starts Now ▶'; }
   });
 }
 
