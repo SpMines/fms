@@ -2020,7 +2020,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbyxxR_TuthZroXkovRP3Si3Fc-P0c1TEqdg10cIPAuFBvVGsrSpWW_XVdiJl6Wdv1fU/exec";
+const API = "https://script.google.com/macros/s/AKfycbxXN0vAaGfK99U32I4LjVzzLmXB9jQDOpv3h1HrqeayZeWRggdQUaJ5gKTBnXetpmk0/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2634,7 +2634,7 @@ function openOrder(id){
   fetchAndRenderOrder(id, true);
   document.getElementById('odModal').classList.add('show');
   ODTICK = setInterval(()=> tickCountdowns(), 1000);
-  ODPOLL = setInterval(()=> fetchAndRenderOrder(id, false), 15000);
+  ODPOLL = setInterval(()=> fetchAndRenderOrder(id, false), 30000);
 }
 
 function fetchAndRenderOrder(id, showLoaderFlag){
