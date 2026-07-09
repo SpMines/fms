@@ -1648,6 +1648,33 @@ body {
   .otable .hidem { display: none; }
   .od-head, .od-items, .od-body, .od-foot { padding-left: 16px; padding-right: 16px; }
 }
+/* ===== MITRA BOT ===== */
+#mitraFab{position:fixed;right:22px;bottom:22px;z-index:9000;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;font-size:24px;color:#fff;background:linear-gradient(135deg,#6C5CE7,#a29bfe);box-shadow:0 12px 34px rgba(108,92,231,.55);transition:transform .2s}
+#mitraFab:hover{transform:scale(1.08)}
+#mitraPanel{position:fixed;right:22px;bottom:92px;z-index:9001;width:min(380px,calc(100vw - 30px));height:min(560px,calc(100dvh - 130px));display:none;flex-direction:column;background:rgba(16,16,28,.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(108,92,231,.35);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.7);overflow:hidden;animation:cardIn .35s cubic-bezier(.16,1,.3,1)}
+#mitraPanel.on{display:flex}
+.mt-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--brd);background:linear-gradient(135deg,rgba(108,92,231,.18),transparent)}
+.mt-ava{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#6C5CE7,#a29bfe);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
+.mt-name{font-weight:700;font-size:15px}
+.mt-sub{font-size:11px;color:#7fe9c0}
+.mt-x{background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:6px}
+.mt-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.mt-m{max-width:85%;padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.mt-m.bot{background:rgba(108,92,231,.12);border:1px solid rgba(108,92,231,.25);border-bottom-left-radius:4px;align-self:flex-start}
+.mt-m.user{background:rgba(255,255,255,.07);border:1px solid var(--brd);border-bottom-right-radius:4px;align-self:flex-end}
+.mt-m b{color:#a29bfe}
+.mt-m .mt-link{color:#8fd0ff;cursor:pointer;text-decoration:underline}
+.mt-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px}
+.mt-chip{font-size:11.5px;padding:6px 11px;border-radius:20px;border:1px solid rgba(108,92,231,.35);background:rgba(108,92,231,.08);color:#c9c3ff;cursor:pointer}
+.mt-chip:hover{background:rgba(108,92,231,.2)}
+.mt-inrow{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--brd)}
+.mt-inrow input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--brd);border-radius:12px;padding:10px 13px;color:var(--txt);font-family:inherit;font-size:13.5px}
+.mt-send{width:42px;border-radius:12px;border:none;cursor:pointer;color:#fff;background:linear-gradient(135deg,#6C5CE7,#a29bfe);font-size:15px}
+.mt-teach{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.mt-teach textarea{background:rgba(255,255,255,.05);border:1px solid var(--brd);border-radius:10px;padding:8px 10px;color:var(--txt);font-family:inherit;font-size:12.5px;min-height:52px}
+.mt-teach button{align-self:flex-start;font-size:12px;padding:6px 14px;border-radius:9px;border:none;cursor:pointer;color:#fff;background:linear-gradient(135deg,#6C5CE7,#a29bfe)}
+
+
 </style>
 </head>
 <body>
@@ -2051,7 +2078,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbxL6U8bU8b8RbQDYuHYF3JlVewKzOIeHd3HS0dGuRkrY3uHPIdT_EYUvX94150UaLvv/exec";
+const API = "https://script.google.com/macros/s/AKfycbylCB5TWha4fRZ0H60mSWh9mfzSqvP_6WSU7rQPy6YWFQ5sO0K56gpCXwdSbPtASueg/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2415,7 +2442,8 @@ function fullReport(){
       .noprint{text-align:center;margin-bottom:18px}
       .noprint button{background:#6C5CE7;color:#fff;border:none;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Jost'}
       @media print{.noprint{display:none}body{background:#fff;padding:0}}
-    </style></head><body><div class="wrap">
+    
+</style></head><body><div class="wrap">
       <div class="noprint"><button onclick="window.print()">🖨️ Print / Save as PDF</button></div>
       <div class="hd"><h1>SP FMS — ${kind} Report</h1><p>Generated ${now} · ${rows.length} record(s)${document.getElementById('f_from').value?' · from '+document.getElementById('f_from').value:''}${document.getElementById('f_to').value?' to '+document.getElementById('f_to').value:''}</p></div>
       <div class="kpis">
@@ -3533,6 +3561,205 @@ function delRole(name){
     confirmText:'Delete',
     onConfirm:()=> api({action:'deleteRole', role_name:name}).then(()=>{loadTeam(); toast('Role deleted','ok');})});
 }
+
+/* ================= MITRA — SP Mines Assistant ================= */
+let MT_OPEN=false, MT_BRAIN=[], MT_COUNTS=null, MT_LASTORD='', MT_LOADED=false;
+
+function mitraToggle(){
+  MT_OPEN=!MT_OPEN;
+  document.getElementById('mitraPanel').classList.toggle('on',MT_OPEN);
+  if(MT_OPEN && !MT_LOADED){ mitraBoot(); }
+  if(MT_OPEN) setTimeout(()=>document.getElementById('mtIn').focus(),150);
+}
+function mitraBoot(){
+  MT_LOADED=true;
+  mtBot(`Namaste <b>${esc(SESSION&&SESSION.name||'boss')}</b>! 👋 Main <b>Sam</b> — SP Mines ka assistant. 🤖\nOrders, gate, approvals, imports — kuch bhi poochho. Order ID likh do toh uska pura status bata dunga.`);
+  mtChips(['📊 Status summary','✅ Mere tasks','⏰ Delayed orders','📧 ORD-0001 remind karo','❓ Help']);
+  apiSilent({action:'botBrain'}).then(d=>{ MT_BRAIN=d.brain||[]; MT_COUNTS=d.counts||null; }).catch(()=>{});
+}
+function mtBot(html, teachQ){
+  const w=document.getElementById('mtMsgs');
+  const el=document.createElement('div'); el.className='mt-m bot';
+  el.innerHTML=html + (teachQ && can('can_manage_team') ? `
+    <div class="mt-teach">
+      <textarea id="mtTeachA" placeholder="Sam ko iska jawab sikhao…"></textarea>
+      <button onclick="mtTeach('${esc(teachQ).replace(/'/g,"\\'")}')">💡 Teach Sam</button>
+    </div>` : '');
+  w.appendChild(el); w.scrollTop=w.scrollHeight;
+}
+function mtUser(t){
+  const w=document.getElementById('mtMsgs');
+  const el=document.createElement('div'); el.className='mt-m user'; el.textContent=t;
+  w.appendChild(el); w.scrollTop=w.scrollHeight;
+}
+function mtChips(list){
+  document.getElementById('mtChips').innerHTML=list.map(x=>
+    `<span class="mt-chip" onclick="mtAsk('${x.replace(/'/g,"")}')">${x}</span>`).join('');
+}
+function mtAsk(t){ document.getElementById('mtIn').value=t; mitraSend(); }
+function mtTeach(q){
+  const a=document.getElementById('mtTeachA').value.trim();
+  if(!a) return toast('Jawab likho pehle','err');
+  api({action:'botTeach', q:q, a:a}).then(()=>{
+    MT_BRAIN.push({q:q,a:a});
+    mtBot('Seekh liya ✅ Agli baar ye khud jawab dunga.');
+  });
+}
+
+/* brain match: keyword overlap score */
+function mtBrainMatch(q){
+  const qw=q.toLowerCase().split(/\W+/).filter(w=>w.length>2);
+  let best=null,bs=0;
+  MT_BRAIN.forEach(b=>{
+    if(!b.a) return;
+    const bw=b.q.toLowerCase().split(/\W+/);
+    let s=0; qw.forEach(w=>{ if(bw.includes(w)) s++; });
+    if(s>bs){ bs=s; best=b; }
+  });
+  return (bs>=2 || (bs>=1 && qw.length<=2)) ? best : null;
+}
+
+function mitraSend(){
+  const inEl=document.getElementById('mtIn');
+  const q=inEl.value.trim(); if(!q) return;
+  inEl.value=''; mtUser(q);
+  setTimeout(()=>mitraAnswer(q), 250);
+}
+
+function mitraAnswer(q){
+  const L=q.toLowerCase();
+
+  // --- order id lookup (context-aware) ---
+  const idm = q.match(/\b(ord|mr|req)[-\s]?(\d{1,5})\b/i);
+  if(idm){
+    const oid=(idm[1].toUpperCase()==='REQ'?'REQ':idm[1].toUpperCase())+'-'+String(idm[2]).padStart(4,'0');
+    if(/^REQ/.test(oid)){
+      // old imported id — search notes
+      apiSilent({action:'listOrders', q:oid, status:'All', page:1}).then(d=>{
+        const o=(d.orders||[])[0];
+        if(o){ MT_LASTORD=o.order_id; mtBot(`Purana <b>${oid}</b> ab <b>${o.order_id}</b> hai.\nStatus: <b>${o.status}</b> · ${o.done}/${o.total} steps\n<span class="mt-link" onclick="openOrder('${o.order_id}')">Order kholo →</span>`); }
+        else mtBot(`<b>${oid}</b> nahi mila. Import hua tha kya?`);
+      });
+      return;
+    }
+    MT_LASTORD=oid;
+    apiSilent({action:'getOrder', order_id:oid}).then(d=>{
+      const o=d.order, steps=d.steps||[];
+      const cur=steps.find(s=>s.live==='Running'||s.live==='Delayed');
+      const done=steps.filter(s=>s.live==='Completed').length;
+      mtBot(`<b>${o.order_id}</b> — ${esc(o.receiver||'')}\nStatus: <b>${o.status}</b> · ${done}/${steps.length} steps done`+
+        (cur?`\nAbhi atka: <b>${esc(cur.name)}</b> (${esc(cur.role||'—')} pe, ${cur.live==='Delayed'?'⚠ LATE':'⏳ chalu'})`:'')+
+        (o.linked_order?`\n🔗 Linked: ${esc(o.linked_order)}`:'')+
+        `\n<span class="mt-link" onclick="openOrder('${o.order_id}')">Order kholo →</span>`);
+    }).catch(()=>mtBot(`<b>${oid}</b> nahi mila — ID check karo.`));
+    return;
+  }
+
+  // --- follow-up on last order ---
+  if(MT_LASTORD && /\b(uska|iska|usko|status|kaha|kya hua)\b/i.test(L) && L.length<30){
+    mitraAnswer(MT_LASTORD); return;
+  }
+
+  // --- live stats ---
+  if(/status|summary|kitne|count|total|overview|report/i.test(L) && /order|status|summary|kitne|total|overview/i.test(L)){
+    apiSilent({action:'botBrain'}).then(d=>{
+      const cc=d.counts||MT_COUNTS||{};
+      mtBot(`📊 <b>Abhi ka haal:</b>\nTotal: <b>${cc.all||0}</b>\n🔵 Running: <b>${cc.running||0}</b>\n🔴 Delayed: <b>${cc.delayed||0}</b>\n✅ Completed: <b>${cc.completed||0}</b>\n⛔ Stopped: <b>${cc.stopped||0}</b>`);
+    });
+    return;
+  }
+
+  // --- delayed orders ---
+  if(/delay|late|atka|overdue|der/i.test(L)){
+    apiSilent({action:'listOrders', q:'', status:'Delayed', page:1}).then(d=>{
+      const os=d.orders||[];
+      if(!os.length) return mtBot('Koi delayed order nahi 🎉 Sab time pe chal raha.');
+      mtBot(`⚠ <b>${d.counts.delayed} delayed:</b>\n`+os.slice(0,6).map(o=>
+        `• <span class="mt-link" onclick="openOrder('${o.order_id}')">${o.order_id}</span> — ${esc(o.current)}`).join('\n')+
+        (os.length>6?`\n…aur ${os.length-6}. Orders page pe Delayed filter dekho.`:''));
+    });
+    return;
+  }
+
+  // --- my tasks ---
+  if(/task|mera kaam|mere|pending|karna|todo|mujhe/i.test(L)){
+    apiSilent({action:'myTasks'}).then(d=>{
+      const ts=d.tasks||[];
+      if(!ts.length) return mtBot('Tumpe kuch pending nahi ✅ Sab clear!');
+      mtBot(`✅ <b>${ts.length} kaam tumpe atke:</b>\n`+ts.slice(0,6).map(t=>
+        `• <b>${esc(t.name)}</b> — <span class="mt-link" onclick="openOrder('${t.order_id}')">${t.order_id}</span>${t.live==='Delayed'?' ⚠':''}`).join('\n')+
+        `\nMy Tasks tab se seedha Done/Approve kar sakte ho.`);
+    });
+    return;
+  }
+
+  // --- remind/assign via mail (Parekh-style) ---
+  if(/remind|yaad dila|mail (bhejo|karo|kar)|assign|notify|bhejo/i.test(L)){
+    const rid = (q.match(/\b(ord|mr)[-\s]?(\d{1,5})\b/i));
+    const oid = rid ? (rid[1].toUpperCase()+'-'+String(rid[2]).padStart(4,'0')) : MT_LASTORD;
+    if(!oid){ mtBot('Kis order pe? ID likho — jaise: <b>ORD-0012 remind karo</b>'); return; }
+    apiSilent({action:'botRemind', order_id:oid}).then(d=>{
+      MT_LASTORD=oid;
+      mtBot(`📧 Done! <b>${oid}</b> ka pending step — <b>${esc(d.role)}</b> role ko reminder mail bhej di.\nBranded mail mein order details + deep link hai.`);
+    }).catch(e=>mtBot('⚠ '+esc(e.message||'Reminder nahi ja paya')));
+    return;
+  }
+
+  // --- how-to intents ---
+  const HOWTO=[
+    [/gate|receipt|security|material.*(entry|receive)/i,
+     `🚧 <b>Gate Entry:</b>\n1. Gate Entry tab → ＋ New Gate Entry\n2. Purchase order ka ID daalo (ORD-xxxx)\n3. Receiver + items auto-copy → MR-xxxx banega\n⚠ Gate tabhi khulega jab PO wale order ka gate-release step complete ho.`],
+    [/approve|reject|decision|approval/i,
+     `🔀 <b>Approve/Reject:</b>\nDecision step pe do button aate hain — ✓ Approve aage badhata, ✕ Reject configured raste pe (stop/jump/complete).\nOwner/Admin/PM kisi bhi decision pe act kar sakte. My Tasks se bhi direct.`],
+    [/import|excel|csv|purana|bulk|historical/i,
+     `📥 <b>Import:</b>\nOrders page → Import → CSV paste/upload.\nSimple: <b>Receiver, Required, Notes, Item|Qty|Unit…</b>\nHistorical: beech mein <b>CreatedAt, Y, GateBy, GateAt</b> — completed orders original dates ke saath.`],
+    [/upload|document|file|attach|drive/i,
+     `📎 <b>Documents:</b>\nRunning step pe Attach dabao — file Drive mein order ke folder mein jati hai. Optional hai, Done alag se dabana padta.\nUpload fail ho toh: Apps Script → authorizeDrive Run → Allow.`],
+    [/new order|order (kaise|create|banau|banana)/i,
+     `＋ <b>New Order:</b>\nOrders → New Order → Receiver + Required Person + Items (qty/unit) → Create.\nStep 1 auto-complete, TAT clock Step 2 se. Email us role ko jati hai.`],
+    [/template|step (add|edit)|flow (change|edit)/i,
+     `🧩 <b>Templates (Admin only):</b>\nTemplates tab → flow chuno → Add Step.\nHar step pe: role, TAT, decision, conditional (run-if), gate-release, final flag.\n⚠ Template change sirf NAYE orders pe lagta hai.`],
+    [/role|permission|user|team|admin|access/i,
+     `👥 <b>Roles:</b>\nSuper Admin > Admin > Project Manager > Doer.\nTeam tab se users add/approve + role permissions toggle karo.\nDoer order bana sakta, apne role ke steps kar sakta.`],
+    [/slow|loading|hang|dhima/i,
+     `⚡ <b>Slow?</b>\n1. Pehli call cold-start hoti (3-5s) — normal\n2. Hard refresh: Ctrl+Shift+R\n3. /exec URL kholke check karo version 3.9 hai\n4. Junk sheet tabs delete karo`],
+    [/delete|hataa?o|remove/i,
+     `🗑 <b>Delete:</b>\nWebapp se: order kholo → Delete Order (sab saaf).\nSheet se manually kiya toh: menu SP FMS → 🧹 Sync From Sheet.`],
+    [/help|madad|kya kar|features|commands/i,
+     `🤝 <b>Main ye sab kar sakta:</b>\n• Kisi order ka live status (ID likho)\n• Delayed/pending/summary\n• Har feature ka how-to (gate, import, approve, docs…)\n• 📧 Reminder mail: \"ORD-0012 remind karo\"\n• Jo nahi aata, admin mujhe sikha sakta hai 💡`],
+    [/hi|hello|hey|namaste|salam|kaise ho/i,
+     `Namaste! 😊 Batao kya jaanna hai — order status, gate, import, kuch bhi.`],
+    [/thank|shukriya|dhanyawad|nice|badhiya|great/i,
+     `Koi baat nahi! 🙌 Aur kuch chahiye toh bolo.`]
+  ];
+  for(const [re,ans] of HOWTO){ if(re.test(L)){ mtBot(ans); return; } }
+
+  // --- taught brain ---
+  const hit=mtBrainMatch(q);
+  if(hit){ mtBot(esc(hit.a).replace(/\n/g,'\n')); return; }
+
+  // --- unknown: log + offer teach ---
+  apiSilent({action:'botUnknown', q:q}).catch(()=>{});
+  mtBot(`Hmm, ye mujhe abhi nahi aata 😅 Maine note kar liya hai.`+
+    (can('can_manage_team')?`\nTum admin ho — neeche jawab sikha do, agli baar khud bataunga:`:`\nAdmin ko bolo, wo mujhe sikha denge.`), q);
+}
+
 </script>
+
+<!-- ================= SAM BOT ================= -->
+<button id="mitraFab" onclick="mitraToggle()" title="Sam — SP Mines Assistant">💬</button>
+<div id="mitraPanel">
+  <div class="mt-head">
+    <div class="mt-ava">M</div>
+    <div style="flex:1"><div class="mt-name">Sam</div><div class="mt-sub">SP Mines Assistant · online</div></div>
+    <button class="mt-x" onclick="mitraToggle()">✕</button>
+  </div>
+  <div class="mt-msgs" id="mtMsgs"></div>
+  <div class="mt-chips" id="mtChips"></div>
+  <div class="mt-inrow">
+    <input id="mtIn" placeholder="Kuch bhi poochho… (ORD-0001 status?)" onkeydown="if(event.key==='Enter')mitraSend()">
+    <button class="mt-send" onclick="mitraSend()">➤</button>
+  </div>
+</div>
 </body>
 </html>
