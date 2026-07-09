@@ -1884,10 +1884,11 @@ body {
     <div class="sub" style="text-align:left;margin-bottom:14px">Excel/CSV se orders bulk add karo. Ek row = ek order. Purchase Process flow mein banenge.</div>
 
     <div style="background:rgba(108,92,231,.06);border:1px dashed rgba(108,92,231,.35);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--muted)">
-      <b style="color:var(--txt)">Format (columns):</b><br>
-      <code style="font-size:12px">Receiver, Required Person, Notes, Item|Qty|Unit, Item|Qty|Unit, …</code><br><br>
-      <b style="color:var(--txt)">Example:</b><br>
-      <code style="font-size:12px">Ramesh, Suresh, urgent, Cement|50|Kg, Steel Rod|20|Nos</code>
+      <b style="color:var(--txt)">Simple format (new orders):</b><br>
+      <code style="font-size:12px">Receiver, Required Person, Notes, Item|Qty|Unit, …</code><br><br>
+      <b style="color:var(--txt)">Historical format (completed orders + gate):</b><br>
+      <code style="font-size:12px">Receiver, Required, Notes, CreatedAt, Y, GateBy, GateAt, Item|Qty|Unit, …</code><br>
+      <span style="font-size:11.5px">Y = completed import (saare steps done, original date). GateBy/GateAt bhare toh gate entry bhi ban jati hai (linked).</span>
       <div style="margin-top:10px"><button class="btn sm ghost" onclick="downloadImportTemplate()">⬇️ Download template CSV</button></div>
     </div>
 
@@ -2894,14 +2895,28 @@ function parseImportCsv(text){
     const cells=t.split(',').map(s=>s.trim());
     // skip header row
     if(/^receiver$/i.test(cells[0]||'')) return;
+
+    // EXTENDED format: Receiver, Required, Notes, CreatedAt, Completed(Y/N), GateBy, GateAt, items...
+    // SIMPLE format:   Receiver, Required, Notes, items...
+    // detect: simple format has an item (contains |) at col 3
+    const extended = !(cells[3]||'').includes('|');
+    const itemStart = extended ? 7 : 3;
+
     const items=[];
-    for(let i=3;i<cells.length;i++){
+    for(let i=itemStart;i<cells.length;i++){
       if(!cells[i]) continue;
       const p=cells[i].split('|').map(s=>s.trim());
       if(!p[0]) continue;
       items.push({ name:p[0], qty:Number(p[1])||1, unit:p[2]||'Nos' });
     }
-    rows.push({ receiver:cells[0]||'', required_person:cells[1]||'', notes:cells[2]||'', items:items });
+    const row={ receiver:cells[0]||'', required_person:cells[1]||'', notes:cells[2]||'', items:items };
+    if(extended){
+      row.created_at = cells[3]||'';
+      row.completed  = /^y/i.test(cells[4]||'');
+      row.gate_by    = cells[5]||'';
+      row.gate_at    = cells[6]||'';
+    }
+    rows.push(row);
   });
   return rows;
 }
@@ -2909,7 +2924,7 @@ function parseImportCsv(text){
 function runImport(){
   const rows=parseImportCsv(document.getElementById('imp_text').value);
   if(!rows.length) return toast('Kuch paste/upload karo pehle','err');
-  if(rows.length>200) return toast('Max 200 rows ek baar mein — file split karo','err');
+  if(rows.length>1000) return toast('Max 1000 rows ek baar mein','err');
   const btn=document.getElementById('imp_go');
   btn.disabled=true; btn.textContent='Importing '+rows.length+'…';
   api({action:'importOrders', rows:rows}).then(d=>{
