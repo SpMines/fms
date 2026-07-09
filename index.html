@@ -1765,6 +1765,7 @@ body {
     <div class="toolrow">
       <input type="search" id="oq" placeholder="Search orders, people, items…" onkeydown="if(event.key==='Enter')searchOrders()">
       <button class="btn sm ghost" onclick="searchOrders()">🔍 Search</button>
+      <button class="btn sm ghost" id="importBtn" onclick="openImport()">📥 Import</button>
       <button class="btn sm" id="pageTitleBtn" onclick="openNewOrder()">＋ New Order</button>
     </div>
     <div class="box">
@@ -1872,6 +1873,35 @@ body {
     <div class="modal-acts">
       <button class="btn ghost" onclick="closeOrderModal()">Cancel</button>
       <button class="btn" onclick="createOrder()">Create — Clock Starts Now ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT ORDERS MODAL -->
+<div class="modal" id="importModal" onclick="if(event.target===this)closeImport()">
+  <div class="modal-card wide" style="width:min(680px,100%)">
+    <div class="modal-title" style="margin-bottom:6px">📥 Import Orders</div>
+    <div class="sub" style="text-align:left;margin-bottom:14px">Excel/CSV se orders bulk add karo. Ek row = ek order. Purchase Process flow mein banenge.</div>
+
+    <div style="background:rgba(108,92,231,.06);border:1px dashed rgba(108,92,231,.35);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--muted)">
+      <b style="color:var(--txt)">Format (columns):</b><br>
+      <code style="font-size:12px">Receiver, Required Person, Notes, Item|Qty|Unit, Item|Qty|Unit, …</code><br><br>
+      <b style="color:var(--txt)">Example:</b><br>
+      <code style="font-size:12px">Ramesh, Suresh, urgent, Cement|50|Kg, Steel Rod|20|Nos</code>
+      <div style="margin-top:10px"><button class="btn sm ghost" onclick="downloadImportTemplate()">⬇️ Download template CSV</button></div>
+    </div>
+
+    <div class="field">
+      <label>Paste CSV rows (or upload a file)</label>
+      <textarea id="imp_text" placeholder="Ramesh, Suresh, urgent, Cement|50|Kg, Steel Rod|20|Nos&#10;Vijay, Anil, , Sand|10|Box" style="min-height:120px;font-family:monospace;font-size:13px"></textarea>
+    </div>
+    <div style="margin:-4px 0 12px"><input type="file" id="imp_file" accept=".csv,.txt" onchange="loadImportFile(this)" style="font-size:13px"></div>
+
+    <div id="imp_result" style="display:none;margin-bottom:12px"></div>
+
+    <div class="modal-acts">
+      <button class="btn ghost" onclick="closeImport()">Close</button>
+      <button class="btn" id="imp_go" onclick="runImport()">Import Orders ▶</button>
     </div>
   </div>
 </div>
@@ -2020,7 +2050,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbxGSB92xUgMAXiTGu3qNFat0Mi6AbV5bu6hkMMtxuSMf6vo52UcdP2Y6krbX8QVb8rf/exec";
+const API = "https://script.google.com/macros/s/AKfycbxuWVKBB2LGzKsMfFDD8PFZ7GG1NpGj7S2kg5wIM4sXmpoP99UjF66b71SFet6LfzUC/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2132,6 +2162,7 @@ function loadTplMap(){
 function syncKindUi(){
   const isGate = ORD_KIND==='gate';
   document.getElementById('pageTitleBtn').textContent = isGate ? '＋ New Gate Entry' : '＋ New Order';
+  const ib=document.getElementById('importBtn'); if(ib) ib.style.display = isGate ? 'none' : '';
   document.getElementById('oq').placeholder = isGate ? 'Search gate entries, order id…' : 'Search orders, people, items…';
 }
 let EDIT_ID=null, INSERT_AFTER=null, ITEM_ROW_N=0;
@@ -2825,6 +2856,74 @@ function deleteOrder(){
         toast('Order deleted','ok'); 
       })
   });
+}
+
+
+/* ================= IMPORT ORDERS ================= */
+function openImport(){
+  document.getElementById('imp_text').value='';
+  document.getElementById('imp_file').value='';
+  document.getElementById('imp_result').style.display='none';
+  document.getElementById('imp_go').disabled=false;
+  document.getElementById('importModal').classList.add('show');
+}
+function closeImport(){ document.getElementById('importModal').classList.remove('show'); }
+
+function downloadImportTemplate(){
+  const csv = 'Receiver,Required Person,Notes,Item1|Qty1|Unit1,Item2|Qty2|Unit2\n' +
+              'Ramesh,Suresh,urgent,Cement|50|Kg,Steel Rod|20|Nos\n' +
+              'Vijay,Anil,,Sand|10|Box,';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='SP_FMS_Import_Template.csv';
+  a.click();
+}
+
+function loadImportFile(inp){
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ document.getElementById('imp_text').value=String(r.result||'').trim(); };
+  r.readAsText(f);
+}
+
+function parseImportCsv(text){
+  const rows=[];
+  String(text||'').split(/\r?\n/).forEach(line=>{
+    const t=line.trim();
+    if(!t) return;
+    const cells=t.split(',').map(s=>s.trim());
+    // skip header row
+    if(/^receiver$/i.test(cells[0]||'')) return;
+    const items=[];
+    for(let i=3;i<cells.length;i++){
+      if(!cells[i]) continue;
+      const p=cells[i].split('|').map(s=>s.trim());
+      if(!p[0]) continue;
+      items.push({ name:p[0], qty:Number(p[1])||1, unit:p[2]||'Nos' });
+    }
+    rows.push({ receiver:cells[0]||'', required_person:cells[1]||'', notes:cells[2]||'', items:items });
+  });
+  return rows;
+}
+
+function runImport(){
+  const rows=parseImportCsv(document.getElementById('imp_text').value);
+  if(!rows.length) return toast('Kuch paste/upload karo pehle','err');
+  if(rows.length>200) return toast('Max 200 rows ek baar mein — file split karo','err');
+  const btn=document.getElementById('imp_go');
+  btn.disabled=true; btn.textContent='Importing '+rows.length+'…';
+  api({action:'importOrders', rows:rows}).then(d=>{
+    btn.disabled=false; btn.textContent='Import Orders ▶';
+    const box=document.getElementById('imp_result');
+    box.style.display='block';
+    const fails=(d.results||[]).filter(r=>!r.ok);
+    box.innerHTML =
+      `<div style="padding:12px 14px;border-radius:12px;background:${fails.length?'rgba(255,181,71,.08)':'rgba(55,211,153,.08)'};border:1px solid ${fails.length?'rgba(255,181,71,.35)':'rgba(55,211,153,.35)'};font-size:13px">
+        <b>${d.created}/${d.total} orders created ✓</b>
+        ${fails.length?'<div style="margin-top:8px;color:#ffc875">Failed rows:</div>'+fails.map(f=>`<div style="font-size:12px;color:var(--muted)">Row ${f.row}: ${esc(f.error)}</div>`).join(''):''}
+      </div>`;
+    if(d.created) loadOrders();
+  }).catch(()=>{ btn.disabled=false; btn.textContent='Import Orders ▶'; });
 }
 
 /* ================= MY TASKS ================= */
