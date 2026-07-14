@@ -2078,7 +2078,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbylCB5TWha4fRZ0H60mSWh9mfzSqvP_6WSU7rQPy6YWFQ5sO0K56gpCXwdSbPtASueg/exec";
+const API = "https://script.google.com/macros/s/AKfycbwToi6XgxY8oTUXh_vjJldfzFMZgqVyn3w5ONBRs-meFFp2tSnyQj0X-TlZz8Xoinac/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2717,7 +2717,8 @@ function tickCountdowns(){
 }
 
 function renderOrderDetail(){
-  const o=CUR_ORDER, steps=CUR_STEPS;
+  const o=CUR_ORDER;
+  let steps=CUR_STEPS;
   document.getElementById('odTitle').textContent = o.order_id+' — '+o.title;
   document.getElementById('odSub').textContent = 'by '+o.created_by+' · '+fmtDT(o.created_at)+(o.notes?' · '+o.notes:'');
   document.getElementById('odDelBtn').style.display = can('can_build')?'':'none';
@@ -2757,6 +2758,19 @@ function renderOrderDetail(){
   // is the whole order finished? (a final step done, or nothing left running)
   const orderDone = String(o.status)==='Completed';
   let hideRest = false;   // once we pass the completing step, hide the tail
+
+  // SAFETY: dirty DB (old duplicate-step bug) could send the same seq twice.
+  // Keep one row per seq — prefer the completed one.
+  const bySeq = {};
+  steps.forEach(s=>{
+    const k = String(s.seq);
+    const prev = bySeq[k];
+    if(!prev) { bySeq[k] = s; return; }
+    if(s.done_ts && !prev.done_ts) bySeq[k] = s;
+  });
+  steps = Object.keys(bySeq)
+    .sort((a,b)=>Number(a)-Number(b))
+    .map(k=>bySeq[k]);
 
   document.getElementById('odSteps').innerHTML = steps.map(s=>{
     const isSkip = (s.live==='Skipped' || s.decision==='Skipped');
