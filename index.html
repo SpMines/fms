@@ -1788,6 +1788,7 @@ body {
       <button class="btn sm ghost" onclick="clearFilters()">✕ Clear</button>
       <button class="btn sm ghost" onclick="exportReport()">📥 Export CSV</button>
       <button class="btn sm ghost" onclick="fullReport()">📊 Full Report</button>
+      <button class="btn sm ghost" id="syncBtn" onclick="syncSheetNow()">🔄 Sync Sheet</button>
     </div>
     <div class="toolrow">
       <input type="search" id="oq" placeholder="Search orders, people, items…" onkeydown="if(event.key==='Enter')searchOrders()">
@@ -1796,9 +1797,14 @@ body {
       <button class="btn sm" id="pageTitleBtn" onclick="openNewOrder()">＋ New Order</button>
     </div>
     <div class="box">
+      <div id="bulkBar" style="display:none;margin-bottom:12px;gap:10px;align-items:center">
+        <button class="btn sm danger" onclick="deleteSelected()">🗑 Delete Selected (<span id="selCount">0</span>)</button>
+        <span class="osub">Selected orders + unke steps + board rows — sab saaf ho jayega</span>
+      </div>
       <div class="tablewrap">
         <table class="otable">
           <thead><tr>
+            <th id="selHead" style="width:34px;display:none"><input type="checkbox" onclick="selAll(this)"></th>
             <th>Order</th><th>Receiver</th><th class="hidem">Party</th><th class="hidem">Current Step</th>
             <th>Progress</th><th>Status</th><th class="hidem">Created</th>
           </tr></thead>
@@ -2078,7 +2084,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbwToi6XgxY8oTUXh_vjJldfzFMZgqVyn3w5ONBRs-meFFp2tSnyQj0X-TlZz8Xoinac/exec";
+const API = "https://script.google.com/macros/s/AKfycbzAYpxaVtH5i1GbqPj9-_LzxsvSRwdJmFlUmGTGTovWGm1pATynNFlMbcFL9WjYnTXJ/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2191,6 +2197,7 @@ function syncKindUi(){
   const isGate = ORD_KIND==='gate';
   document.getElementById('pageTitleBtn').textContent = isGate ? '＋ New Gate Entry' : '＋ New Order';
   const ib=document.getElementById('importBtn'); if(ib) ib.style.display = isGate ? 'none' : '';
+  const sb=document.getElementById('syncBtn'); if(sb) sb.style.display = can('can_execute_all') ? '' : 'none';
   document.getElementById('oq').placeholder = isGate ? 'Search gate entries, order id…' : 'Search orders, people, items…';
 }
 let EDIT_ID=null, INSERT_AFTER=null, ITEM_ROW_N=0;
@@ -2497,6 +2504,33 @@ function exportReport(){
   });
 }
 
+
+/* ===== bulk select + delete + sheet sync ===== */
+function selBoxes(){ return Array.from(document.querySelectorAll('.selbox')); }
+function selAll(cb){ selBoxes().forEach(b=>b.checked=cb.checked); selChange(); }
+function selChange(){
+  const n = selBoxes().filter(b=>b.checked).length;
+  document.getElementById('selCount').textContent = n;
+  document.getElementById('bulkBar').style.display = n ? 'flex' : 'none';
+}
+function deleteSelected(){
+  const ids = selBoxes().filter(b=>b.checked).map(b=>b.value);
+  if(!ids.length) return;
+  modalConfirm({icon:'🗑', title:'Delete '+ids.length+' orders?', danger:true,
+    message:'Ye '+ids.length+' orders + unke saare steps + board rows PERMANENTLY delete honge. Wapas nahi aayenge. Pakka?',
+    confirmText:'Yes, delete '+ids.length, onConfirm:()=>{
+      api({action:'deleteOrders', ids:ids}).then(d=>{
+        toast(d.removed+' orders deleted 🗑','ok');
+        ORD_PAGE=1; loadOrders();
+      });
+    }});
+}
+function syncSheetNow(){
+  api({action:'syncSheet'}).then(d=>{
+    toast('Synced ✓ duplicates:'+d.duplicates+' orphans:'+d.orphans,'ok');
+    ORD_PAGE=1; loadOrders();
+  });
+}
 function searchOrders(){ 
   ORD_PAGE=1; 
   ORD_LASTQ=document.getElementById('oq').value.trim(); 
@@ -2552,6 +2586,7 @@ function loadOrders(){
     document.getElementById('orderRows').innerHTML = d.orders.length ? d.orders.map(o=>{
       const pct = o.total? Math.round(o.done/o.total*100):0;
       return `<tr class="orow" onclick="openOrder('${o.order_id}')">
+        ${can('can_execute_all')?`<td onclick="event.stopPropagation()"><input type="checkbox" class="selbox" value="${esc(o.order_id)}" onchange="selChange()"></td>`:''}
         <td class="oid">${esc(o.order_id)}</td>
         <td><div class="otitle">${esc(o.receiver)||esc(o.title)}</div><div class="osub">by ${esc(o.created_by)}</div></td>
         <td class="hidem">${esc(o.party)||'—'}</td>
@@ -2560,8 +2595,10 @@ function loadOrders(){
         <td><span class="badge bg-${esc(o.status)}">${esc(o.status)}</span></td>
         <td class="hidem osub">${fmtDT(o.created_at)}</td>
       </tr>`;
-    }).join('') : `<tr><td colspan="7"><div class="empty"><div class="big">${ORD_KIND==='gate'?'🚧':'📦'}</div>${ORD_KIND==='gate'?'No gate entries yet. Hit ＋ New Gate Entry and enter a purchase order ID.':'Nothing here yet. Spin up your first order.'}</div></td></tr>`;
+    }).join('') : `<tr><td colspan="8"><div class="empty"><div class="big">${ORD_KIND==='gate'?'🚧':'📦'}</div>${ORD_KIND==='gate'?'No gate entries yet. Hit ＋ New Gate Entry and enter a purchase order ID.':'Nothing here yet. Spin up your first order.'}</div></td></tr>`;
 
+    document.getElementById('selHead').style.display = can('can_execute_all') ? '' : 'none';
+    selChange();
     document.getElementById('pager').innerHTML = d.pages>1 ?
       `<button class="btn sm ghost" ${d.page<=1?'disabled':''} onclick="ORD_PAGE--;loadOrders()">← Prev</button>
        <span>Page ${d.page} / ${d.pages} · ${d.total} orders</span>
@@ -2721,7 +2758,7 @@ function renderOrderDetail(){
   let steps=CUR_STEPS;
   document.getElementById('odTitle').textContent = o.order_id+' — '+o.title;
   document.getElementById('odSub').textContent = 'by '+o.created_by+' · '+fmtDT(o.created_at)+(o.notes?' · '+o.notes:'');
-  document.getElementById('odDelBtn').style.display = can('can_build')?'':'none';
+  document.getElementById('odDelBtn').style.display = can('can_execute_all')?'':'none';
 
   const chips=[];
   if(o.party) chips.push(`<span class="od-chip">🏢 <b>${esc(o.party)}</b></span>`);
