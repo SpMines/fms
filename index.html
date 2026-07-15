@@ -2101,7 +2101,7 @@ body {
 
 <script>
 /* ================= CONFIG ================= */
-const API = "https://script.google.com/macros/s/AKfycbzH2HPX-jpIJ_nIusnxajedWC-vy7mKLAibQMtJwE75qb72soosNsO9xiAJ3nkrB8xx/exec";
+const API = "https://script.google.com/macros/s/AKfycbx0DiR_KqK0fS-uRLbUstMO2xEX7fDCmY_WEmLAzaNFWch5GGH3JnX0KluSoCmfSO1L/exec";
 
 /* ================= CORE ================= */
 let _busy=0;
@@ -2705,7 +2705,7 @@ function openGateModal(){
   document.getElementById('gm_oid').value='';
   document.getElementById('gm_notes').value='';
   document.getElementById('gm_preview').style.display='none';
-  GM_OK=false; GM_RESOLVED='';
+  GM_OK=false; GM_RESOLVED=''; GM_ITEMS=[];
   document.getElementById('gateModal').classList.add('show');
 }
 
@@ -2715,7 +2715,7 @@ function closeGateModal(){
 
 
 /* ===== gate fetch preview ===== */
-let GM_TIMER=null, GM_OK=false, GM_RESOLVED='';
+let GM_TIMER=null, GM_OK=false, GM_RESOLVED='', GM_ITEMS=[];
 function gatePreviewDebounced(){ clearTimeout(GM_TIMER); GM_TIMER=setTimeout(gatePreview, 450); }
 function gatePreview(){
   const oid=document.getElementById('gm_oid').value.trim();
@@ -2733,11 +2733,28 @@ function gatePreview(){
     }
     GM_RESOLVED=d.order_id;
     if(d.eligible){
-      GM_OK=true;
+      GM_OK=true; GM_ITEMS=d.items||[];
       box.style.background='rgba(55,211,153,.08)'; box.style.border='1px solid rgba(55,211,153,.35)';
-      box.innerHTML=`✅ <b>${esc(d.order_id)}</b> — ${esc(d.receiver)}<br>`+
-        `Status: <b>${esc(d.status)}</b> · ${d.done}/${d.total} steps · 📦 ${d.items_n} items (auto-copy honge)<br>`+
-        `<b style="color:#7fe9c0">Gate ke liye ready ✔</b>${d.reason?' <span class="osub">('+esc(d.reason)+')</span>':''}`;
+      let rows=(d.items||[]).map((it,i)=>`
+        <tr>
+          <td style="padding:6px 8px">${esc(it.name)}</td>
+          <td style="padding:6px 8px;text-align:center;color:var(--muted)">${esc(String(it.qty))} ${esc(it.unit||'')}</td>
+          <td style="padding:6px 4px;text-align:center">
+            <input type="number" min="0" step="any" class="grecv" data-i="${i}" value="${esc(String(it.qty))}"
+              oninput="gateRecvCheck()"
+              style="width:74px;text-align:center;background:rgba(255,255,255,.06);border:1px solid var(--brd);border-radius:8px;padding:6px;color:var(--txt);font-family:inherit;font-size:13px">
+          </td>
+        </tr>`).join('');
+      box.innerHTML=`✅ <b>${esc(d.order_id)}</b> — ${esc(d.receiver)} · <b>${esc(d.status)}</b><br>
+        <div style="margin:10px 0 6px;font-size:12px;color:var(--muted)">Received qty check karo — kam aaya toh number badal do:</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">
+            <th style="text-align:left;padding:4px 8px">Item</th>
+            <th style="padding:4px 8px">Ordered</th>
+            <th style="padding:4px 8px">Received</th>
+          </tr></thead><tbody>${rows}</tbody>
+        </table>
+        <div id="gRecvStatus" style="margin-top:8px;font-weight:700;color:#7fe9c0">✔ Full order received (COMPLETE)</div>`;
     } else {
       box.style.background='rgba(255,181,71,.08)'; box.style.border='1px solid rgba(255,181,71,.35)';
       box.innerHTML=`⚠ <b>${esc(d.order_id)}</b> — ${esc(d.receiver)} · ${esc(d.status)}<br>`+
@@ -2748,14 +2765,31 @@ function gatePreview(){
     box.innerHTML='⚠ '+esc(e.message||'Fetch fail');
   });
 }
+
+function gateRecvCheck(){
+  const boxes=Array.from(document.querySelectorAll('.grecv'));
+  let anyShort=false, anyOver=false;
+  boxes.forEach(b=>{
+    const i=+b.dataset.i, rq=Number(b.value), oq=Number((GM_ITEMS[i]||{}).qty)||0;
+    if(rq<oq) anyShort=true; if(rq>oq) anyOver=true;
+    b.style.borderColor = rq<oq ? 'rgba(255,181,71,.6)' : rq>oq ? 'rgba(143,208,255,.6)' : 'var(--brd)';
+  });
+  const el=document.getElementById('gRecvStatus'); if(!el) return;
+  if(anyShort){ el.style.color='#ffc875'; el.innerHTML='⚠ PARTIAL — kuch items kam aaye (note me short qty save hoga)'; }
+  else if(anyOver){ el.style.color='#8fd0ff'; el.innerHTML='ℹ Received > Ordered — check karo'; }
+  else { el.style.color='#7fe9c0'; el.innerHTML='✔ Full order received (COMPLETE)'; }
+}
 function createReceipt(){
   const oid=(GM_RESOLVED||document.getElementById('gm_oid').value.trim());
   if(!oid) return toast('Purchase Order ID daalo (e.g. ORD-0001)','err');
   
+  const recvItems = Array.from(document.querySelectorAll('.grecv'))
+    .sort((a,b)=>(+a.dataset.i)-(+b.dataset.i)).map(b=>Number(b.value));
   api({
     action:'createReceipt', 
     purchase_order_id:oid,
-    notes:document.getElementById('gm_notes').value.trim()
+    notes:document.getElementById('gm_notes').value.trim(),
+    received_items:recvItems
   })
   .then(d=>{ 
     closeGateModal(); 
@@ -2849,7 +2883,14 @@ function renderOrderDetail(){
     const hl = (ORD_LASTQ||'').toLowerCase();
     document.getElementById('odItems').innerHTML = items.map(it=>{
       const match = hl && String(it.name).toLowerCase().includes(hl);
-      return `<tr style="${match?'background:rgba(108,92,231,.14)':''}"><td>${esc(it.name)}${match?' <span class="sc-tag t-role" style="margin-left:6px">match</span>':''}</td><td>${esc(it.qty)} ${esc(it.unit||'')}</td></tr>`;
+      const oq = (it.ordered_qty!==undefined && it.ordered_qty!=='') ? Number(it.ordered_qty) : null;
+      const rq = Number(it.qty);
+      const short = oq!==null && rq<oq;
+      const qtyCell = oq!==null
+        ? `<span style="${short?'color:#ffc875;font-weight:700':''}">${esc(String(rq))} ${esc(it.unit||'')}</span>`
+          + (oq!==rq?` <span class="osub">/ ${oq} ordered${short?' ⚠':''}</span>`:'')
+        : `${esc(String(rq))} ${esc(it.unit||'')}`;
+      return `<tr style="${match?'background:rgba(108,92,231,.14)':''}"><td>${esc(it.name)}${match?' <span class="sc-tag t-role" style="margin-left:6px">match</span>':''}</td><td>${qtyCell}</td></tr>`;
     }).join('');
   } else {
     document.getElementById('odItems').innerHTML = `<tr><td colspan="2" style="color:var(--muted);text-align:center;padding:16px 0">No items found for this order.</td></tr>`;
