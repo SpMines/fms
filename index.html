@@ -55,12 +55,13 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-bottom:1
 <div class="blob b1"></div><div class="blob b2"></div>
 <div class="wrap">
   <div class="logo"><div class="brand">XAUUSD</div>
+    <button class="themebtn" style="margin-left:auto" onclick="toggleSettings()" title="Settings">⚙️</button>
     <button class="themebtn" id="themeBtn" onclick="toggleTheme()">🌙</button>
   </div>
 
   <div id="signalBox" class="glass"><div class="muted">Loading…</div></div>
 
-  <div class="glass">
+  <div class="glass" id="settingsCard" style="display:none">
     <h4 class="t">Settings — broker · capital · risk</h4>
     <div class="row2">
       <div class="field"><label>Broker</label><input id="broker" type="text"></div>
@@ -93,7 +94,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-bottom:1
 
 <script>
 /* ===== CONFIG: paste your Apps Script Web App /exec URL here ===== */
-const API   = "https://script.google.com/macros/s/AKfycbwzRffAoHdIgBxX72hL_PuYmHcjGe1jAEH2oQGSdMTsPETNgyte_A8bMzckSLzxt1JmvA/exec";
+const API   = "https://script.google.com/macros/s/AKfycbydOpg5doSNYJ-iyHpEPLFo_jpkW1k96lQvpodFASbYgvgwY8q4S_Y4fjpcxRvgl79B/exec";
 const TOKEN = "";   /* optional: must match API_TOKEN script property if you set one */
 /* ================================================================ */
 
@@ -107,6 +108,7 @@ function applyTheme(mode){
   try{localStorage.setItem('xau_theme',mode);}catch(e){}
 }
 function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';applyTheme(cur==='light'?'dark':'light');}
+function toggleSettings(){var c=document.getElementById('settingsCard');c.style.display=(c.style.display==='none'||!c.style.display)?'block':'none';}
 (function(){var m='dark';try{m=localStorage.getItem('xau_theme')||'dark';}catch(e){}applyTheme(m);})();
 
 function needSetup(){
